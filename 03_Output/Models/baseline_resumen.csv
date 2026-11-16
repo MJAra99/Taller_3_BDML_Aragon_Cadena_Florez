@@ -1,0 +1,5 @@
+envio,hiperparam,mae_cv_cop
+01_lm_base,intercept = TRUE,196578106.22018597
+02_enet_base,"alpha = 1, lambda = 0.000215443469003188",196590704.49478486
+03_cart_base,cp = 1e-05,131956077.40547568
+04_rf_base,"mtry = 6, splitrule = variance, min.node.size = 5",110514710.34989506
