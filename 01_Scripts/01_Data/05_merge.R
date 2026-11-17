@@ -168,10 +168,11 @@ tibble(variable = names(db_train)) %>%
   count(prefijo) %>%
   print()
 
-# Variables con faltantes después de la imputación (solo deberían quedar las
-# coordenadas, si alguna falta).
+# Variables con faltantes después de la imputación, sin contar las variables
+# objetivo e id_grupo_anuncio, que solo existen en train.
 db %>%
   summarise(across(everything(), ~ sum(is.na(.x)))) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "faltantes") %>%
-  filter(faltantes > 0, !variable %in% c("obj_price", "obj_log_price")) %>%
+  filter(faltantes > 0,
+         !variable %in% c("obj_price", "obj_log_price", "id_grupo_anuncio")) %>%
   print(n = Inf)

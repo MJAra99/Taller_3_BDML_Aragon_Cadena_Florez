@@ -226,7 +226,7 @@ esquemas_cv <- c("aleatoria", "bloques", "bloques_buffer", "localidad")
 etiquetas_cv <- c(aleatoria      = "Aleatoria por grupos de anuncios repetidos (5 folds)",
                   bloques        = "Bloques de 2 km (5 folds)",
                   bloques_buffer = "Bloques de 2 km con buffer de 300 m (5 folds)",
-                  localidad      = "Una localidad por fuera")
+                  localidad      = "Localidades completas por fuera (5 folds)")
 
 # Convierte los folds de rsample o spatialsample a la lista train / val.
 fun_folds_desde_rset <- function(rset) {
@@ -255,8 +255,12 @@ fun_folds_cv <- function(db, esquema, k = 5, seed = semilla,
     }
     return(fun_folds_desde_rset(rset))
   }
+  # Localidades completas por fuera: las localidades se reparten en k grupos
+  # y cada fold deja por fuera todas las propiedades de un grupo.
   if (esquema == "localidad") {
-    return(fun_folds_desde_rset(spatial_leave_location_out_cv(puntos, group = cat_localidad)))
+    return(fun_folds_desde_rset(
+      spatial_leave_location_out_cv(puntos, group = cat_localidad, v = k)
+    ))
   }
   if (!esquema %in% c("bloques", "bloques_buffer")) {
     stop("Esquema de validación desconocido: ", esquema)
@@ -273,7 +277,10 @@ fun_folds_cv <- function(db, esquema, k = 5, seed = semilla,
   })
 }
 
-# Folds de los cuatro esquemas, con nombre.
+# Folds de los cuatro esquemas, con nombre. El esquema usado para escoger
+# hiperparámetros es `esquema_seleccion`.
+esquema_seleccion <- "localidad"
+
 fun_todos_folds <- function(db) {
   set_names(map(esquemas_cv, ~ fun_folds_cv(db, .x)), esquemas_cv)
 }
@@ -295,4 +302,134 @@ fun_mae_esquemas <- function(fml, datos, metodo, hiperparam, folds_todos, ...) {
                trControl = fun_trcontrol(folds), tuneGrid = hiperparam, ...)
     tibble(esquema = esquema, mae_cop = fun_mae_cv(m))
   })
+}
+
+# ------------------------------------------------------------------------------
+# Modelos
+# ------------------------------------------------------------------------------
+
+# Columnas de db_train que no se usan como predictores: identificadores,
+# variables objetivo, fecha (ya representada por año y mes), coordenadas en
+# grados (ya representadas por num_x y num_y) y unidades territoriales, que
+# solo definen los folds espaciales.
+no_predictores <- c("property_id", "id_grupo_anuncio", "obj_price", "obj_log_price",
+                    "fecha", "num_lat", "num_lon", "cat_localidad", "cat_upz",
+                    "cat_upz_codigo", "cat_sector", "cat_sector_codigo",
+                    "cat_cuadrante")
+
+# Carga las bases finales y convierte las variables categóricas en factores
+# con los mismos niveles en train y test.
+fun_datos_modelo <- function() {
+  ruta <- here("02_Data", "Processed")
+  train <- readRDS(file.path(ruta, "db_train.rds"))
+  test  <- readRDS(file.path(ruta, "db_test.rds"))
+  predictores <- setdiff(names(train), no_predictores)
+  categoricas <- predictores[map_lgl(train[predictores], ~ is.character(.x) || is.factor(.x))]
+  for (v in categoricas) {
+    niveles <- sort(unique(c(as.character(train[[v]]), as.character(test[[v]]))))
+    train[[v]] <- factor(as.character(train[[v]]), levels = niveles)
+    test[[v]]  <- factor(as.character(test[[v]]),  levels = niveles)
+  }
+  list(train = train, test = test, predictores = predictores,
+       fml = reformulate(predictores, response = "obj_log_price"))
+}
+
+# MAE en pesos a partir de log(precio) observado y predicho.
+fun_mae_log <- function(obs, pred) mean(abs(exp(obs) - exp(pred)))
+
+# Afina un modelo de caret con los folds de `folds` y escoge los
+# hiperparámetros con el menor MAE en pesos calculado sobre todas las
+# predicciones fuera de muestra juntas (no como promedio de folds, para que
+# los folds pequeños no pesen igual que los grandes).
+fun_afinar_caret <- function(fml, datos, metodo, grid, folds, ...) {
+  set.seed(semilla)
+  control <- fun_trcontrol(folds)
+  control$savePredictions <- "all"
+  m <- train(fml, data = datos, method = metodo, metric = "MAE",
+             trControl = control, tuneGrid = grid, ...)
+  parametros <- names(m$bestTune)
+  tabla <- m$pred %>%
+    group_by(across(all_of(parametros))) %>%
+    summarise(mae_cop = fun_mae_log(obs, pred), .groups = "drop") %>%
+    arrange(mae_cop)
+  list(mejor = as.data.frame(tabla[1, parametros]), tabla = tabla)
+}
+
+# Ajuste final con todos los datos de train y los hiperparámetros escogidos.
+fun_ajuste_final_caret <- function(fml, datos, metodo, hiperparam, ...) {
+  set.seed(semilla)
+  train(fml, data = datos, method = metodo,
+        trControl = trainControl(method = "none"), tuneGrid = hiperparam, ...)
+}
+
+# Texto con los hiperparámetros, para tablas y descripciones de los envíos.
+fun_texto_hiperparam <- function(hiperparam) {
+  if (is.null(hiperparam) || ncol(hiperparam) == 0) return("sin hiperparámetros")
+  paste(names(hiperparam), map_chr(hiperparam, ~ format(.x[1], digits = 4)),
+        sep = " = ", collapse = ", ")
+}
+
+# Registra los resultados de un modelo en 03_Output/Models/resultados_modelos.csv
+# (una fila por modelo; si el modelo ya estaba, se reemplaza su fila).
+fun_registrar_resultado <- function(modelo, familia, hiperparam_texto, mae_esquemas, envio) {
+  ruta <- here("03_Output", "Models", "resultados_modelos.csv")
+  fila <- mae_esquemas %>%
+    mutate(esquema = paste0("mae_cv_", esquema)) %>%
+    pivot_wider(names_from = esquema, values_from = mae_cop) %>%
+    mutate(modelo = modelo, familia = familia, hiperparametros = hiperparam_texto,
+           envio = envio, fecha = as.character(Sys.Date()), .before = 1)
+  # Se lee y se une todo como texto para que las columnas coincidan aunque un
+  # modelo tenga un esquema sin valor.
+  previos <- if (file.exists(ruta)) {
+    read_csv(ruta, col_types = cols(.default = col_character())) %>%
+      filter(modelo != !!modelo)
+  } else {
+    NULL
+  }
+  write_csv(bind_rows(previos, mutate(fila, across(everything(), as.character))), ruta)
+  invisible(fila)
+}
+
+# Descripción sugerida para el envío en Kaggle.
+fun_descripcion_kaggle <- function(familia, hiperparam_texto, mae_esquemas) {
+  mae <- set_names(round(mae_esquemas$mae_cop / 1e6), mae_esquemas$esquema)
+  paste0(familia, " sobre log(precio), ", hiperparam_texto,
+         ". Base completa. MAE CV (millones): aleatoria ", mae[["aleatoria"]],
+         ", bloques ", mae[["bloques"]], ", bloques con buffer ", mae[["bloques_buffer"]],
+         ", localidades ", mae[["localidad"]], ".")
+}
+
+# Flujo completo de un modelo de caret:
+# 1. afina los hiperparámetros con el esquema `esquema_seleccion`;
+# 2. con esos hiperparámetros, calcula el MAE en pesos con los cuatro esquemas;
+# 3. ajusta el modelo final con todo train y predice test;
+# 4. guarda el envío, el resumen del modelo en 03_Output/Models/<envio>.rds y
+#    su fila en resultados_modelos.csv, e imprime la descripción para Kaggle.
+fun_correr_caret <- function(envio, familia, metodo, grid = NULL, ...) {
+  datos <- fun_datos_modelo()
+  folds <- fun_todos_folds(datos$train)
+
+  message("Afinando con el esquema: ", etiquetas_cv[[esquema_seleccion]])
+  afinado <- fun_afinar_caret(datos$fml, datos$train, metodo, grid,
+                              folds[[esquema_seleccion]], ...)
+  hiperparam_texto <- fun_texto_hiperparam(afinado$mejor)
+  message("Hiperparámetros escogidos: ", hiperparam_texto)
+
+  message("Calculando el MAE con los cuatro esquemas")
+  mae <- fun_mae_esquemas(datos$fml, datos$train, metodo, afinado$mejor, folds, ...)
+
+  message("Ajuste final con todo train")
+  final <- fun_ajuste_final_caret(datos$fml, datos$train, metodo, afinado$mejor, ...)
+  pred_test <- predict(final, newdata = datos$test)
+  fun_submission(datos$test$property_id, pred_test, envio)
+
+  saveRDS(list(envio = envio, familia = familia, hiperparam = afinado$mejor,
+               tabla_afinacion = afinado$tabla, mae = mae, pred_test = pred_test),
+          here("03_Output", "Models", paste0(envio, ".rds")))
+  fun_registrar_resultado(envio, familia, hiperparam_texto, mae, envio)
+
+  print(afinado$tabla, n = 20)
+  print(mae %>% mutate(mae_millones = round(mae_cop / 1e6, 1)))
+  message("Descripción para Kaggle: ", fun_descripcion_kaggle(familia, hiperparam_texto, mae))
+  invisible(list(afinado = afinado, mae = mae, final = final))
 }

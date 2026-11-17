@@ -12,9 +12,12 @@
 #           - atributos del polígono donde cae la propiedad (UPZ, UPL,
 #             localidad, zona de amenaza, etc.).
 #           Todos los cálculos se hacen en EPSG:9377, en metros.
-#           La capa de delitos de alto impacto (34_delitos) no se usa: viene por
+#           Las capas de delitos de alto impacto (34_delitos) y del índice de
+#           seguridad nocturna (36a_seguridad_nocturna) no se usan: vienen por
 #           localidad y casi todo test está en una sola localidad (Chapinero),
-#           de modo que en test sería prácticamente constante.
+#           de modo que en test serían prácticamente constantes. Los puntos de
+#           evaluación de seguridad nocturna (36b_seguridad_nocturna) no traen
+#           columnas numéricas que se puedan resumir.
 # Entradas: 02_Data/Processed/base_limpia.rds
 #           02_Data/Raw/MapasBogota/capas/*
 # Salidas:  02_Data/Processed/spatial_features.rds (una fila por property_id)
@@ -33,16 +36,6 @@ puntos <- base %>%
 sp <- tibble(property_id = puntos$property_id)
 
 fun_mensaje <- function(texto) message(format(Sys.time(), "%H:%M:%S"), "  ", texto)
-
-# Columnas numéricas de una capa que no son identificadores ni medidas de la
-# geometría. Se usa en las capas de seguridad nocturna, cuyo esquema varía
-# según la fuente.
-fun_numericas <- function(capa) {
-  tabla <- st_drop_geometry(capa)
-  numericas <- names(tabla)[map_lgl(tabla, is.numeric)]
-  numericas[!str_detect(str_to_lower(numericas),
-                        "objectid|^fid$|^id|shape|area$|len$|longitud|latitud|^x$|^y$|codigo|cod_")]
-}
 
 # ------------------------------------------------------------------------------
 # 1. Catastro por manzana, con el año catastral igual al año del anuncio
@@ -84,6 +77,11 @@ manzanas <- v_ref %>%
   st_drop_geometry() %>%
   transmute(MANCODIGO, anio, x = coords_vref[, 1], y = coords_vref[, 2], valor)
 
+# Ubicación única de cada manzana por año. Algunas manzanas tienen más de un
+# polígono en la capa; para ubicarlas se usa el primero.
+ubicacion_anio <- manzanas %>% distinct(MANCODIGO, anio, .keep_all = TRUE) %>%
+  select(MANCODIGO, anio, x, y)
+
 sp$num_vref_m2_200m <- fun_por_anio(manzanas, radio = 200)
 
 # Ubica una tabla sin geometría (MANCODIGO, año, valor) con las coordenadas de
@@ -94,7 +92,7 @@ ubicacion_codigo <- manzanas %>% distinct(MANCODIGO, .keep_all = TRUE) %>%
 
 fun_ubicar_manzanas <- function(tabla, nombre) {
   ubicada <- tabla %>%
-    left_join(manzanas %>% select(MANCODIGO, anio, x, y), by = c("MANCODIGO", "anio")) %>%
+    left_join(ubicacion_anio, by = c("MANCODIGO", "anio")) %>%
     left_join(ubicacion_codigo, by = "MANCODIGO") %>%
     mutate(x = coalesce(x, x_otro), y = coalesce(y, y_otro)) %>%
     select(-x_otro, -y_otro)
@@ -263,25 +261,6 @@ fun_mensaje("Atracos")
 atracos <- fun_leer_capa("35_atracos")
 celda <- map_int(st_intersects(puntos, atracos), ~ if (length(.x) == 0) NA_integer_ else .x[1])
 sp$num_atracos_celda <- replace_na(as.numeric(atracos$COUNT[celda]), 0)
-
-# Seguridad nocturna: índice por UPZ (columnas numéricas del polígono) y
-# promedio de los puntos de evaluación a menos de 500 m.
-fun_mensaje("Seguridad nocturna")
-seg_upz <- fun_leer_capa("36a_seguridad_nocturna")
-campos_seg <- fun_numericas(seg_upz)
-message("  columnas usadas (índice por UPZ): ", paste(campos_seg, collapse = ", "))
-sp <- bind_cols(sp, fun_poligono(puntos, seg_upz, campos_seg) %>%
-                  rename_with(~ paste0("num_segnoct_", str_to_lower(.x))))
-
-seg_puntos <- fun_leer_capa("36b_seguridad_nocturna")
-campos_eval <- fun_numericas(seg_puntos)
-message("  columnas usadas (puntos de evaluación): ", paste(campos_eval, collapse = ", "))
-coords_eval <- fun_coords(seg_puntos)
-for (campo in campos_eval) {
-  sp[[paste0("num_evalnoct_", str_to_lower(campo), "_500m")]] <-
-    fun_resumen_radio(puntos, coords_eval, as.numeric(seg_puntos[[campo]]),
-                      radio = 500, fun = mean)
-}
 
 fun_mensaje("Policía y alumbrado")
 sp$num_dist_policia <- fun_dist_min(puntos, fun_leer_capa("37_estaciones_policia"))

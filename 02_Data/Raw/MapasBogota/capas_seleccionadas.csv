@@ -41,8 +41,8 @@ id,grupo,capa,fuente,origen,campos,geometria,simplificar_m,recorte,campo_anio,an
 33_parqueo_pago,Movilidad,Zonas de parqueo pago,arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/movilidad/zonasparqueopago/MapServer/0,*,TRUE,,TRUE,,,TRUE,Distancia a la zona de parqueo pago más cercana
 34_delitos,Seguridad,Delito de alto impacto,ckan,delito-de-alto-impacto-bogota-d-c,*,TRUE,,FALSE,,,TRUE,No se usa como predictor: la capa viene por localidad y en test sería casi constante
 35_atracos,Seguridad,Atracos (celdas de 300 m),arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/aplicaciones/mbbici_seguridad/MapServer/3,*,TRUE,,TRUE,,,TRUE,Número de atracos de la celda donde cae la propiedad
-36a_seguridad_nocturna,Seguridad,Índice de condiciones de seguridad nocturna para las mujeres,ckan,indice-de-condiciones-de-seguridad-nocturna-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Valor del índice de la UPZ
-36b_seguridad_nocturna,Seguridad,Evaluación de seguridad nocturna para las mujeres 2019,ckan,evaluacion-de-seguridad-nocturna-para-las-mujeres-de-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Valor del índice de la UPZ
+36a_seguridad_nocturna,Seguridad,Índice de condiciones de seguridad nocturna para las mujeres,ckan,indice-de-condiciones-de-seguridad-nocturna-bogota-d-c,*,TRUE,,FALSE,,,TRUE,No se usa como predictor: la capa viene por localidad y en test sería casi constante
+36b_seguridad_nocturna,Seguridad,Evaluación de seguridad nocturna para las mujeres 2019,ckan,evaluacion-de-seguridad-nocturna-para-las-mujeres-de-bogota-d-c,*,TRUE,,FALSE,,,TRUE,No se usa como predictor: los puntos de evaluación no traen columnas numéricas
 37_estaciones_policia,Seguridad,Estaciones de policía,ckan,estacion-de-policia-para-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Distancia a la estación más cercana
 38_cuadrantes,Seguridad,Cuadrantes de policía,ckan,cuadrantes-de-policia-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Cuadrante al que pertenece la propiedad
 39_alumbrado,Seguridad,Luminarias por UPZ,arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/serviciospublicos/sistemaalumbradopublico/MapServer/0,*,TRUE,,FALSE,,,TRUE,Luminarias por hectárea de la UPZ
