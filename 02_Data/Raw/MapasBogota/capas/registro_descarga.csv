@@ -1,57 +1,53 @@
-id,archivo,fecha,estado,registros
-01_valor_referencia,NA,2026-11-16 17:07:17.566307,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/valorreferencia/MapServer/0,NA
-02_avaluo_ph,NA,2026-11-16 17:07:18.30688,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/medavalcatphmz/MapServer/0,NA
-03_avaluo_manzana,NA,2026-11-16 17:07:19.045303,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/medianaavaluocatastral/MapServer/0,NA
-04_estrato,04_estrato.geojson,2026-11-16 17:21:44.248188,descargada,34822
-05_altura,NA,2026-11-16 17:21:51.991522,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/alturamedia/MapServer/0,NA
-06_uso,NA,2026-11-16 17:21:53.158553,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/usopredominante/MapServer/0,NA
-07_densidad_predial,NA,2026-11-16 17:21:54.469015,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/catastro/densidadpredialmz/MapServer/0,NA
-08_museos,08_museos.geojson,2026-11-16 17:22:04.201029,descargada,72
-09_teatros,09_teatros.geojson,2026-11-16 17:22:14.796406,descargada,130
-10_cines,10_cines.geojson,2026-11-16 17:22:16.40329,descargada,48
-11_galerias,11_galerias.geojson,2026-11-16 17:22:18.118595,descargada,30
-12_bibliotecas,12_bibliotecas.geojson,2026-11-16 19:33:22.651559,descargada,17
-13_gastronomia_bar,NA,2026-11-16 19:34:04.834393,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/turismo/turismobogota/MapServer/18,NA
-14_establecimientos,14_establecimientos.geojson,2026-11-16 19:45:20.113908,descargada,402264
-15_centros_comerciales,15_centros_comerciales.geojson,2026-11-16 19:45:36.954488,descargada,28
-16_plazas_mercado,16_plazas_mercado.geojson,2026-11-16 19:45:38.495513,descargada,18
-17_zonas_turisticas,NA,2026-11-16 19:46:39.424279,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/turismo/turismobogota/MapServer/10,NA
-18_distritos_creativos,18_distritos_creativos.geojson,2026-11-16 19:46:56.659926,descargada,12
-19_ips,19_ips.geojson,2026-11-16 19:47:19.241371,descargada,2989
-20a_empresas_servicio_2019,20a_empresas_servicio_2019.geojson,2026-11-16 19:48:03.995548,descargada,115
-20b_empresas_servicio_2020,20b_empresas_servicio_2020.geojson,2026-11-16 19:48:36.887616,descargada,115
-20c_empresas_servicio_2021,20c_empresas_servicio_2021.geojson,2026-11-16 19:49:11.223263,descargada,115
-20d_empresas_comercial_2019,20d_empresas_comercial_2019.geojson,2026-11-16 19:49:52.146361,descargada,115
-20e_empresas_comercial_2020,20e_empresas_comercial_2020.geojson,2026-11-16 19:50:25.507039,descargada,115
-20f_empresas_comercial_2021,20f_empresas_comercial_2021.geojson,2026-11-16 19:50:56.878991,descargada,115
-21_educacion_superior,21_educacion_superior.geojson,2026-11-16 19:51:01.840278,descargada,117
-22_colegios,22_colegios.geojson,2026-11-16 19:51:06.915169,descargada,NA
-23_saber11,23_saber11.geojson,2026-11-16 19:51:31.294331,descargada,905
-24_arboles,24_arboles.geojson,2026-11-16 20:19:13.899441,descargada,1205797
-25_parques,25_parques.geojson,2026-11-16 20:20:50.393918,descargada,4468
-26a_cuerpos_agua,26a_cuerpos_agua.geojson,2026-11-16 20:22:18.025915,descargada,205
-26b_corrientes_agua,26b_corrientes_agua.geojson,2026-11-16 20:23:31.555571,descargada,1099
-27_espacio_publico,27_espacio_publico.geojson,2026-11-16 20:24:04.917532,descargada,112
-28a_estaciones_tm,28a_estaciones_tm.geojson,2026-11-16 20:24:08.418523,descargada,137
-28b_portales_tm,28b_portales_tm.geojson,2026-11-16 20:24:11.081285,descargada,8
-29_paraderos_sitp,29_paraderos_sitp.geojson,2026-11-16 20:24:27.751069,descargada,6415
-30_ciclorrutas,30_ciclorrutas.geojson,2026-11-16 20:25:31.322873,descargada,5975
-31_cicloparqueaderos,31_cicloparqueaderos.geojson,2026-11-16 20:25:34.931753,descargada,15
-32_metro,32_metro.geojson,2026-11-16 20:25:38.828524,descargada,16
-33_parqueo_pago,33_parqueo_pago.geojson,2026-11-16 20:25:48.257298,descargada,862
-34_delitos,34_delitos.geojson,2026-11-16 20:26:20.70145,descargada,21
-35_atracos,35_atracos.geojson,2026-11-16 20:26:30.737572,descargada,1186
-36a_seguridad_nocturna,NA,2026-11-16 20:27:32.852026,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/mujeres/seguridad/MapServer/10,NA
-36b_seguridad_nocturna,NA,2026-11-16 20:28:33.824404,error: La capa no tiene registros en el área: https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/mujeres/seguridad/MapServer/11,NA
-37_estaciones_policia,37_estaciones_policia.geojson,2026-11-16 20:28:41.383091,descargada,21
-38_cuadrantes,38_cuadrantes.geojson,2026-11-16 20:29:02.58387,descargada,599
-39_alumbrado,39_alumbrado.geojson,2026-11-16 20:29:42.55331,descargada,112
-41_curvas_nivel,NA,2026-11-16 20:32:11.97748,"error: parse error: premature EOF
-                                       {""type"":""FeatureCollection"",""fe
-                     (right here) ------^
-",NA
-42_amenaza_remocion,42_amenaza_remocion.geojson,2026-11-16 20:38:14.011657,descargada,2261
-43_respuesta_sismica,43_respuesta_sismica.geojson,2026-11-16 20:39:27.950191,descargada,16
-44_localidades,44_localidades.geojson,2026-11-16 20:39:53.877976,descargada,20
-45_upz,45_upz.geojson,2026-11-16 20:40:32.75685,descargada,112
-46_sectores_catastrales,46_sectores_catastrales.geojson,2026-11-16 20:43:18.324844,descargada,1230
+id,estado,registros,archivo,fecha
+01_valor_referencia,ya descargada,NA,01_valor_referencia.geojson,2026-11-16 22:48:28.47156
+02_avaluo_ph,ya descargada,NA,02_avaluo_ph.geojson,2026-11-16 22:48:28.479041
+03_avaluo_manzana,ya descargada,NA,03_avaluo_manzana.csv,2026-11-16 22:48:28.485013
+04_estrato,ya descargada,NA,04_estrato.geojson,2026-11-16 22:48:28.490695
+05_altura,ya descargada,NA,05_altura.csv,2026-11-16 22:48:28.497252
+06_uso,ya descargada,NA,06_uso.csv,2026-11-16 22:48:28.503072
+07_densidad_predial,ya descargada,NA,07_densidad_predial.csv,2026-11-16 22:48:28.507808
+08_museos,ya descargada,NA,08_museos.geojson,2026-11-16 22:48:28.514263
+09_teatros,ya descargada,NA,09_teatros.geojson,2026-11-16 22:48:28.519789
+10_cines,ya descargada,NA,10_cines.geojson,2026-11-16 22:48:28.526117
+11_galerias,ya descargada,NA,11_galerias.geojson,2026-11-16 22:48:28.535989
+12_bibliotecas,ya descargada,NA,12_bibliotecas.geojson,2026-11-16 22:48:28.541975
+13_gastronomia_bar,ya descargada,NA,13_gastronomia_bar.geojson,2026-11-16 22:48:28.55033
+14_establecimientos,ya descargada,NA,14_establecimientos.geojson,2026-11-16 22:48:28.557855
+15_centros_comerciales,ya descargada,NA,15_centros_comerciales.geojson,2026-11-16 22:48:28.565637
+16_plazas_mercado,ya descargada,NA,16_plazas_mercado.geojson,2026-11-16 22:48:28.572324
+17_zonas_turisticas,ya descargada,NA,17_zonas_turisticas.geojson,2026-11-16 22:48:28.579221
+18_distritos_creativos,ya descargada,NA,18_distritos_creativos.geojson,2026-11-16 22:48:28.58854
+19_ips,ya descargada,NA,19_ips.geojson,2026-11-16 22:48:28.594823
+20a_empresas_servicio_2019,ya descargada,NA,20a_empresas_servicio_2019.geojson,2026-11-16 22:48:28.601852
+20b_empresas_servicio_2020,ya descargada,NA,20b_empresas_servicio_2020.geojson,2026-11-16 22:48:28.609096
+20c_empresas_servicio_2021,ya descargada,NA,20c_empresas_servicio_2021.geojson,2026-11-16 22:48:28.620679
+20d_empresas_comercial_2019,ya descargada,NA,20d_empresas_comercial_2019.geojson,2026-11-16 22:48:28.627752
+20e_empresas_comercial_2020,ya descargada,NA,20e_empresas_comercial_2020.geojson,2026-11-16 22:48:28.635413
+20f_empresas_comercial_2021,ya descargada,NA,20f_empresas_comercial_2021.geojson,2026-11-16 22:48:28.641615
+21_educacion_superior,ya descargada,NA,21_educacion_superior.geojson,2026-11-16 22:48:28.650512
+22_colegios,ya descargada,NA,22_colegios.geojson,2026-11-16 22:48:28.656299
+23_saber11,ya descargada,NA,23_saber11.geojson,2026-11-16 22:48:28.661395
+24_arboles,ya descargada,NA,24_arboles.geojson,2026-11-16 22:48:28.666983
+25_parques,ya descargada,NA,25_parques.geojson,2026-11-16 22:48:28.674666
+26a_cuerpos_agua,ya descargada,NA,26a_cuerpos_agua.geojson,2026-11-16 22:48:28.683397
+26b_corrientes_agua,ya descargada,NA,26b_corrientes_agua.geojson,2026-11-16 22:48:28.689739
+27_espacio_publico,ya descargada,NA,27_espacio_publico.geojson,2026-11-16 22:48:28.695886
+28a_estaciones_tm,ya descargada,NA,28a_estaciones_tm.geojson,2026-11-16 22:48:28.703397
+28b_portales_tm,ya descargada,NA,28b_portales_tm.geojson,2026-11-16 22:48:28.711273
+29_paraderos_sitp,ya descargada,NA,29_paraderos_sitp.geojson,2026-11-16 22:48:28.717877
+30_ciclorrutas,ya descargada,NA,30_ciclorrutas.geojson,2026-11-16 22:48:28.723978
+31_cicloparqueaderos,ya descargada,NA,31_cicloparqueaderos.geojson,2026-11-16 22:48:28.731372
+32_metro,ya descargada,NA,32_metro.geojson,2026-11-16 22:48:28.73727
+33_parqueo_pago,ya descargada,NA,33_parqueo_pago.geojson,2026-11-16 22:48:28.744176
+34_delitos,ya descargada,NA,34_delitos.geojson,2026-11-16 22:48:28.750914
+35_atracos,ya descargada,NA,35_atracos.geojson,2026-11-16 22:48:28.755979
+36a_seguridad_nocturna,ya descargada,NA,36a_seguridad_nocturna.geojson,2026-11-16 22:48:28.861147
+36b_seguridad_nocturna,ya descargada,NA,36b_seguridad_nocturna.geojson,2026-11-16 22:48:28.869621
+37_estaciones_policia,ya descargada,NA,37_estaciones_policia.geojson,2026-11-16 22:48:28.877997
+38_cuadrantes,ya descargada,NA,38_cuadrantes.geojson,2026-11-16 22:48:28.886259
+39_alumbrado,ya descargada,NA,39_alumbrado.geojson,2026-11-16 22:48:28.896432
+42_amenaza_remocion,ya descargada,NA,42_amenaza_remocion.geojson,2026-11-16 22:48:28.903664
+43_respuesta_sismica,ya descargada,NA,43_respuesta_sismica.geojson,2026-11-16 22:48:28.917732
+44_localidades,ya descargada,NA,44_localidades.geojson,2026-11-16 22:48:28.926365
+45_upz,ya descargada,NA,45_upz.geojson,2026-11-16 22:48:28.93594
+46_sectores_catastrales,ya descargada,NA,46_sectores_catastrales.geojson,2026-11-16 22:48:28.944336

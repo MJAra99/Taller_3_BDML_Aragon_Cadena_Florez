@@ -10,8 +10,15 @@
 #             del rectángulo que contiene las propiedades de train y test.
 #             Cuando las columnas `campo_anio` y `anios` tienen valor, solo se
 #             descargan los registros de esos años (las capas de catastro
-#             publican una versión por año). Los bloques que llegan incompletos
-#             se dividen en bloques más pequeños.
+#             publican una versión por año). Cuando la columna `geometria` es
+#             FALSE, solo se descargan los atributos y se guardan en CSV; se
+#             usa en las capas de catastro por manzana, cuya ubicación se toma
+#             de 01_valor_referencia con el código de manzana (MANCODIGO). Los
+#             bloques que llegan incompletos se dividen en bloques más
+#             pequeños. Cuando la columna `simplificar_m` tiene valor, el
+#             servidor simplifica las líneas y polígonos con esa tolerancia en
+#             metros antes de enviarlos; se usa en las curvas de nivel, cuyas
+#             líneas tienen demasiados vértices.
 #           - ckan: conjunto de datos de Datos Abiertos Bogotá. Se consulta la
 #             lista de recursos del conjunto y se prueban, en este orden, los
 #             servicios ArcGIS, el GeoJSON, el Shapefile y el CSV, hasta que
@@ -21,7 +28,7 @@
 #           vuelven a descargar.
 # Entradas: 02_Data/Raw/MapasBogota/capas_seleccionadas.csv
 #           02_Data/Raw/Kaggle/{train,test}.csv (coordenadas para el recorte)
-# Salidas:  02_Data/Raw/MapasBogota/capas/<id>.geojson (o .zip / .csv)
+# Salidas:  02_Data/Raw/MapasBogota/capas/<id>.geojson (o .csv / .zip)
 #           02_Data/Raw/MapasBogota/capas/registro_descarga.csv
 # ==============================================================================
 
@@ -35,6 +42,8 @@ url_ckan <- "https://datosabiertos.bogota.gov.co/api/3/action/package_show"
 
 capas <- read_csv(ruta_capas, show_col_types = FALSE,
                   col_types = cols(.default = col_character(),
+                                   geometria = col_logical(),
+                                   simplificar_m = col_double(),
                                    recorte = col_logical(),
                                    descargar = col_logical())) %>%
   filter(descargar)
@@ -132,24 +141,26 @@ fun_condicion_anios <- function(url_capa, info, campo_anio, anios) {
 # Pide los registros de un bloque de identificadores en GeoJSON. Si la
 # respuesta llega incompleta (pasa con líneas o polígonos con muchos
 # vértices), divide el bloque en dos y pide cada mitad por separado.
-fun_pedir_bloque <- function(url_capa, ids_bloque, campos_salida) {
+fun_pedir_bloque <- function(url_capa, ids_bloque, campos_salida, tolerancia = NA) {
+  parametros <- list(objectIds = paste(ids_bloque, collapse = ","),
+                     outFields = campos_salida,
+                     returnGeometry = "true",
+                     outSR = "4326",
+                     f = "geojson")
+  # La tolerancia va en grados porque la salida está en EPSG:4326
+  # (1 grado de latitud mide unos 111.000 m).
+  if (!is.na(tolerancia)) parametros$maxAllowableOffset <- tolerancia / 111000
   registros <- tryCatch({
-    texto <- fun_pedir(file.path(url_capa, "query"),
-                       list(objectIds = paste(ids_bloque, collapse = ","),
-                            outFields = campos_salida,
-                            returnGeometry = "true",
-                            outSR = "4326",
-                            f = "geojson"),
-                       metodo = "POST")
+    texto <- fun_pedir(file.path(url_capa, "query"), parametros, metodo = "POST")
     fromJSON(texto, simplifyVector = FALSE)$features
   }, error = function(e) e)
 
   if (!inherits(registros, "error")) return(registros)
   if (length(ids_bloque) == 1) stop(conditionMessage(registros))
   mitad <- ceiling(length(ids_bloque) / 2)
-  c(fun_pedir_bloque(url_capa, ids_bloque[1:mitad], campos_salida),
+  c(fun_pedir_bloque(url_capa, ids_bloque[1:mitad], campos_salida, tolerancia),
     fun_pedir_bloque(url_capa, ids_bloque[(mitad + 1):length(ids_bloque)],
-                     campos_salida))
+                     campos_salida, tolerancia))
 }
 
 # Descarga una capa de ArcGIS y la escribe como GeoJSON.
@@ -160,7 +171,8 @@ fun_pedir_bloque <- function(url_capa, ids_bloque, campos_salida) {
 # 3. Pide los registros por bloques de identificadores y los escribe uno tras
 #    otro en el archivo, sin cargar la capa completa en memoria.
 fun_descargar_arcgis <- function(url_capa, archivo, campos = "*", recorte = FALSE,
-                                 campo_anio = NA, anios = NA) {
+                                 campo_anio = NA, anios = NA, geometria = TRUE,
+                                 simplificar_m = NA) {
   info <- fromJSON(fun_pedir(url_capa, list(f = "pjson")), simplifyVector = TRUE)
   campo_id  <- info$objectIdField %||%
     info$fields$name[info$fields$type == "esriFieldTypeOID"][1]
@@ -190,6 +202,24 @@ fun_descargar_arcgis <- function(url_capa, archivo, campos = "*", recorte = FALS
   bloques <- split(ids, ceiling(seq_along(ids) / tam_bloque))
   message("  ", length(ids), " registros en ", length(bloques), " bloques")
 
+  # Sin geometría: se piden solo los atributos de cada bloque y se guardan
+  # todos juntos en un CSV.
+  if (!geometria) {
+    atributos <- map_dfr(seq_along(bloques), function(i) {
+      texto <- fun_pedir(file.path(url_capa, "query"),
+                         list(objectIds = paste(bloques[[i]], collapse = ","),
+                              outFields = campos_salida,
+                              returnGeometry = "false",
+                              f = "json"),
+                         metodo = "POST")
+      if (i %% 10 == 0) message("  bloque ", i, " de ", length(bloques))
+      as_tibble(fromJSON(texto, simplifyVector = TRUE)$features$attributes) %>%
+        mutate(across(everything(), as.character))
+    })
+    write_csv(atributos, archivo)
+    return(length(ids))
+  }
+
   # Escritura del GeoJSON por partes: encabezado, registros de cada bloque
   # separados por comas, y cierre. La conexión al archivo se cierra aunque la
   # descarga se detenga por un error.
@@ -199,7 +229,8 @@ fun_descargar_arcgis <- function(url_capa, archivo, campos = "*", recorte = FALS
   writeLines('{"type":"FeatureCollection","features":[', con, sep = "")
   primero <- TRUE
   for (i in seq_along(bloques)) {
-    registros <- fun_pedir_bloque(url_capa, bloques[[i]], campos_salida)
+    registros <- fun_pedir_bloque(url_capa, bloques[[i]], campos_salida,
+                                  simplificar_m)
     if (length(registros) > 0) {
       json_bloque <- toJSON(registros, auto_unbox = TRUE, digits = NA,
                             null = "null", na = "null")
@@ -242,7 +273,10 @@ fun_descargar_ckan <- function(id_conjunto, archivo_base, campos, recorte) {
   for (formato_buscado in names(extensiones)) {
     candidatos <- recursos %>% filter(formato == formato_buscado)
     for (url_recurso in candidatos$url) {
-      archivo <- paste0(archivo_base, extensiones[[formato_buscado]])
+      # Algunos recursos GeoJSON se publican comprimidos en .zip; el archivo
+      # conserva la extensión de la dirección de descarga.
+      extension <- if (str_detect(url_recurso, "\\.zip$")) ".zip" else extensiones[[formato_buscado]]
+      archivo <- paste0(archivo_base, extension)
       message("  ", formato_buscado, ": ", url_recurso)
       ok <- tryCatch({
         download.file(url_recurso, archivo, mode = "wb", quiet = TRUE)
@@ -264,8 +298,9 @@ fun_descargar_ckan <- function(id_conjunto, archivo_base, campos, recorte) {
 options(timeout = 1800)
 
 registro <- pmap_dfr(capas, function(id, grupo, capa, fuente, origen, campos,
-                                     recorte, campo_anio, anios, descargar,
-                                     variable) {
+                                     geometria, simplificar_m, recorte,
+                                     campo_anio, anios,
+                                     descargar, variable) {
   archivo_base <- file.path(ruta_salida, id)
   existente <- list.files(ruta_salida, pattern = paste0("^", id, "\\.(geojson|zip|csv)$"))
   if (length(existente) > 0) {
@@ -278,8 +313,11 @@ registro <- pmap_dfr(capas, function(id, grupo, capa, fuente, origen, campos,
   resultado <- tryCatch({
     n <- switch(
       fuente,
-      arcgis = fun_descargar_arcgis(origen, paste0(archivo_base, ".geojson"),
-                                    campos, recorte, campo_anio, anios),
+      arcgis = fun_descargar_arcgis(origen,
+                                    paste0(archivo_base,
+                                           if (geometria) ".geojson" else ".csv"),
+                                    campos, recorte, campo_anio, anios,
+                                    geometria, simplificar_m),
       ckan   = fun_descargar_ckan(origen, archivo_base, campos, recorte),
       url    = {
         download.file(origen, paste0(archivo_base, ".geojson"),
