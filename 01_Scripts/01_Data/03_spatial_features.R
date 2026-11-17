@@ -12,6 +12,9 @@
 #           - atributos del polígono donde cae la propiedad (UPZ, UPL,
 #             localidad, zona de amenaza, etc.).
 #           Todos los cálculos se hacen en EPSG:9377, en metros.
+#           La capa de delitos de alto impacto (34_delitos) no se usa: viene por
+#           localidad y casi todo test está en una sola localidad (Chapinero),
+#           de modo que en test sería prácticamente constante.
 # Entradas: 02_Data/Processed/base_limpia.rds
 #           02_Data/Raw/MapasBogota/capas/*
 # Salidas:  02_Data/Processed/spatial_features.rds (una fila por property_id)
@@ -32,7 +35,8 @@ sp <- tibble(property_id = puntos$property_id)
 fun_mensaje <- function(texto) message(format(Sys.time(), "%H:%M:%S"), "  ", texto)
 
 # Columnas numéricas de una capa que no son identificadores ni medidas de la
-# geometría. Se usa en capas cuyo esquema varía según la fuente.
+# geometría. Se usa en las capas de seguridad nocturna, cuyo esquema varía
+# según la fuente.
 fun_numericas <- function(capa) {
   tabla <- st_drop_geometry(capa)
   numericas <- names(tabla)[map_lgl(tabla, is.numeric)]
@@ -252,15 +256,6 @@ sp$num_dist_parqueo_pago <- fun_dist_min(puntos, fun_leer_capa("33_parqueo_pago"
 # ------------------------------------------------------------------------------
 # 6. Seguridad
 # ------------------------------------------------------------------------------
-
-# Delitos de alto impacto: todas las columnas numéricas del polígono donde cae
-# la propiedad, con el prefijo num_delitos_.
-fun_mensaje("Delitos de alto impacto")
-delitos <- fun_leer_capa("34_delitos")
-campos_delitos <- fun_numericas(delitos)
-message("  columnas usadas: ", paste(campos_delitos, collapse = ", "))
-sp <- bind_cols(sp, fun_poligono(puntos, delitos, campos_delitos) %>%
-                  rename_with(~ paste0("num_delitos_", str_to_lower(.x))))
 
 # Atracos: número de atracos de la celda de 300 m donde cae la propiedad. Las
 # propiedades fuera de toda celda tienen cero atracos registrados.

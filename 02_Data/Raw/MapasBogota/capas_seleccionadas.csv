@@ -39,7 +39,7 @@ id,grupo,capa,fuente,origen,campos,geometria,simplificar_m,recorte,campo_anio,an
 31_cicloparqueaderos,Movilidad,Cicloparqueaderos,arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/movilidad/transportepublico/MapServer/0,*,TRUE,,TRUE,,,TRUE,Número a menos de 500 m
 32_metro,Movilidad,Estaciones de la primera línea del metro,arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/movilidad/metrobogota/MapServer/0,*,TRUE,,FALSE,,,TRUE,Distancia a la estación más cercana
 33_parqueo_pago,Movilidad,Zonas de parqueo pago,arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/movilidad/zonasparqueopago/MapServer/0,*,TRUE,,TRUE,,,TRUE,Distancia a la zona de parqueo pago más cercana
-34_delitos,Seguridad,Delito de alto impacto,ckan,delito-de-alto-impacto-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Número de delitos de la zona donde cae la propiedad
+34_delitos,Seguridad,Delito de alto impacto,ckan,delito-de-alto-impacto-bogota-d-c,*,TRUE,,FALSE,,,TRUE,No se usa como predictor: la capa viene por localidad y en test sería casi constante
 35_atracos,Seguridad,Atracos (celdas de 300 m),arcgis,https://serviciosgis.catastrobogota.gov.co/arcgis/rest/services/aplicaciones/mbbici_seguridad/MapServer/3,*,TRUE,,TRUE,,,TRUE,Número de atracos de la celda donde cae la propiedad
 36a_seguridad_nocturna,Seguridad,Índice de condiciones de seguridad nocturna para las mujeres,ckan,indice-de-condiciones-de-seguridad-nocturna-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Valor del índice de la UPZ
 36b_seguridad_nocturna,Seguridad,Evaluación de seguridad nocturna para las mujeres 2019,ckan,evaluacion-de-seguridad-nocturna-para-las-mujeres-de-bogota-d-c,*,TRUE,,FALSE,,,TRUE,Valor del índice de la UPZ

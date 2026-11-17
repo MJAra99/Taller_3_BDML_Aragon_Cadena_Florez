@@ -1,13 +1,14 @@
 # ==============================================================================
 # 00_utils.R
-# Objetivo: funciones comunes del taller: carga y limpieza de datos, folds,
-#           MAE, envíos a Kaggle y cálculos espaciales (lectura de capas,
-#           distancias, conteos en un radio y cruces con polígonos).
+# Objetivo: funciones comunes del taller: carga y limpieza de datos, folds de
+#           validación cruzada (aleatoria y espacial), MAE, envíos a Kaggle y
+#           cálculos espaciales (lectura de capas, distancias, conteos en un
+#           radio y cruces con polígonos).
 # Entradas: ninguna (se carga con source() desde los demás scripts).
 # Salidas:  funciones fun_* en el ambiente.
 # ==============================================================================
 
-pacman::p_load(tidyverse, here, caret, sf, dbscan)
+pacman::p_load(tidyverse, here, caret, sf, dbscan, rsample, spatialsample)
 
 semilla <- 2026
 
@@ -75,10 +76,14 @@ fun_mae_cv <- function(modelo) {
 
 # ------------------------------------------------------------------------------
 # Envío a Kaggle: columnas property_id y price (en pesos)
+# Con `limites` (por ejemplo, c(3e8, 1.65e9), el rango de precios de train),
+# las predicciones se recortan a ese rango.
 # ------------------------------------------------------------------------------
-fun_submission <- function(ids, log_pred, nombre) {
+fun_submission <- function(ids, log_pred, nombre, limites = NULL) {
   ruta <- here("03_Output", "Submissions", paste0(nombre, ".csv"))
-  tibble(property_id = ids, price = exp(log_pred)) %>%
+  precio <- exp(log_pred)
+  if (!is.null(limites)) precio <- pmin(pmax(precio, limites[1]), limites[2])
+  tibble(property_id = ids, price = precio) %>%
     write_csv(ruta)
   message("Envío guardado en: ", ruta)
   invisible(ruta)
@@ -206,4 +211,88 @@ fun_moda <- function(x) {
   x <- x[!is.na(x)]
   if (length(x) == 0) return(NA)
   names(sort(table(x), decreasing = TRUE))[1]
+}
+
+# ------------------------------------------------------------------------------
+# Validación cruzada aleatoria y espacial
+# Cada esquema devuelve una lista de folds; cada fold es una lista con los
+# índices de entrenamiento (`train`) y de validación (`val`) sobre las filas
+# de la base. Con buffer, las propiedades a menos de `buffer` metros del fold
+# de validación no están ni en `train` ni en `val`.
+# ------------------------------------------------------------------------------
+
+esquemas_cv <- c("aleatoria", "bloques", "bloques_buffer", "localidad")
+
+etiquetas_cv <- c(aleatoria      = "Aleatoria por grupos de anuncios repetidos (5 folds)",
+                  bloques        = "Bloques de 2 km (5 folds)",
+                  bloques_buffer = "Bloques de 2 km con buffer de 300 m (5 folds)",
+                  localidad      = "Una localidad por fuera")
+
+# Convierte los folds de rsample o spatialsample a la lista train / val.
+fun_folds_desde_rset <- function(rset) {
+  n <- nrow(rset$splits[[1]]$data)
+  map(rset$splits, function(s) {
+    val <- if (length(s$out_id) > 0 && !all(is.na(s$out_id))) s$out_id else setdiff(seq_len(n), s$in_id)
+    list(train = s$in_id, val = val)
+  })
+}
+
+# El buffer se aplica sobre los mismos bloques del esquema "bloques": se
+# quitan del entrenamiento las propiedades a menos de `buffer` metros de
+# alguna propiedad de validación. La búsqueda de vecinos se hace con un árbol
+# (dbscan::frNN) para no calcular la matriz completa de distancias.
+fun_folds_cv <- function(db, esquema, k = 5, seed = semilla,
+                         tamano_bloque = 2000, buffer = 300) {
+  set.seed(seed)
+  puntos <- st_as_sf(db, coords = c("num_x", "num_y"), crs = crs_metros, remove = FALSE)
+  # En la validación aleatoria, los anuncios con la misma descripción y el
+  # mismo precio (id_grupo_anuncio) quedan siempre en el mismo fold.
+  if (esquema == "aleatoria") {
+    rset <- if ("id_grupo_anuncio" %in% names(db)) {
+      group_vfold_cv(db, group = id_grupo_anuncio, v = k)
+    } else {
+      vfold_cv(db, v = k)
+    }
+    return(fun_folds_desde_rset(rset))
+  }
+  if (esquema == "localidad") {
+    return(fun_folds_desde_rset(spatial_leave_location_out_cv(puntos, group = cat_localidad)))
+  }
+  if (!esquema %in% c("bloques", "bloques_buffer")) {
+    stop("Esquema de validación desconocido: ", esquema)
+  }
+  folds <- fun_folds_desde_rset(spatial_block_cv(puntos, v = k, method = "random",
+                                                 cellsize = tamano_bloque))
+  if (esquema == "bloques") return(folds)
+
+  coords <- as.matrix(db[, c("num_x", "num_y")])
+  map(folds, function(f) {
+    cercanos <- frNN(x = coords[f$val, , drop = FALSE], eps = buffer,
+                     query = coords[f$train, , drop = FALSE], sort = FALSE)$id
+    list(train = f$train[lengths(cercanos) == 0], val = f$val)
+  })
+}
+
+# Folds de los cuatro esquemas, con nombre.
+fun_todos_folds <- function(db) {
+  set_names(map(esquemas_cv, ~ fun_folds_cv(db, .x)), esquemas_cv)
+}
+
+# Control de caret con folds propios.
+fun_trcontrol <- function(folds) {
+  trainControl(method = "cv",
+               index = map(folds, "train"),
+               indexOut = map(folds, "val"),
+               savePredictions = "final")
+}
+
+# MAE en pesos de un modelo de caret con hiperparámetros fijos, para cada
+# esquema de validación. Devuelve una fila por esquema.
+fun_mae_esquemas <- function(fml, datos, metodo, hiperparam, folds_todos, ...) {
+  imap_dfr(folds_todos, function(folds, esquema) {
+    set.seed(semilla)
+    m <- train(fml, data = datos, method = metodo, metric = "MAE",
+               trControl = fun_trcontrol(folds), tuneGrid = hiperparam, ...)
+    tibble(esquema = esquema, mae_cop = fun_mae_cv(m))
+  })
 }

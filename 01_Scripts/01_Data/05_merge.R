@@ -10,6 +10,15 @@
 #             por la mediana de train. El área y los baños se imputan con la
 #             mediana de train por tipo de propiedad y número de habitaciones.
 #           Las medianas se calculan solo con train y se aplican igual a test.
+#           Además:
+#           - se eliminan de train las copias exactas de un anuncio (todas las
+#             columnas originales iguales salvo property_id) y se conserva una;
+#           - se crea id_grupo_anuncio, que identifica los anuncios de train con
+#             la misma descripción y el mismo precio, para que la validación
+#             cruzada aleatoria los ponga en el mismo fold;
+#           - se elimina num_ambientes, que coincide con el número de
+#             habitaciones en el 99,8 % de los anuncios;
+#           - se eliminan las variables constantes en train.
 # Entradas: 02_Data/Processed/base_limpia.rds
 #           02_Data/Processed/text_features.rds
 #           02_Data/Processed/spatial_features.rds
@@ -34,6 +43,31 @@ db <- base %>%
   left_join(elevacion, by = "property_id")
 
 stopifnot(nrow(db) == nrow(base))
+
+# ------------------------------------------------------------------------------
+# 0. Anuncios repetidos en train
+# ------------------------------------------------------------------------------
+train_raw <- fun_load_raw()$train
+
+columnas_originales <- setdiff(names(train_raw), "property_id")
+ids_copias <- train_raw$property_id[duplicated(train_raw[, columnas_originales])]
+
+grupos <- train_raw %>%
+  mutate(id_grupo_anuncio = if_else(
+    is.na(description),
+    paste0("sin_descripcion_", property_id),
+    paste0("grupo_", as.integer(factor(paste(description, price))))
+  )) %>%
+  select(property_id, id_grupo_anuncio)
+
+db <- db %>%
+  filter(!property_id %in% ids_copias) %>%
+  left_join(grupos, by = "property_id")
+
+message("Copias exactas eliminadas de train: ", length(ids_copias))
+message("Anuncios de train que comparten descripción y precio con otro: ",
+        db %>% filter(muestra == "train") %>% add_count(id_grupo_anuncio) %>%
+          summarise(sum(n > 1)) %>% pull())
 
 # ------------------------------------------------------------------------------
 # 1. Variables combinadas y derivadas
@@ -99,20 +133,25 @@ db <- db %>%
   mutate(across(starts_with("cat_") & where(is.character),
                 ~ replace_na(.x, "Sin dato")))
 
-# Las dummies de faltantes que no varían (todas cero) no aportan y se eliminan.
-dummies_constantes <- db %>%
-  select(starts_with("bin_") & ends_with("_na")) %>%
+# Las variables que toman un solo valor en train no aportan información y se
+# eliminan.
+constantes <- db %>%
+  filter(muestra == "train") %>%
+  select(-property_id, -muestra) %>%
   select(where(~ n_distinct(.x) == 1)) %>%
   names()
-db <- db %>% select(-all_of(dummies_constantes))
+message("Variables constantes eliminadas: ",
+        if (length(constantes) == 0) "ninguna" else paste(constantes, collapse = ", "))
+db <- db %>% select(-all_of(constantes))
 
 # ------------------------------------------------------------------------------
 # 4. Bases de salida
 # ------------------------------------------------------------------------------
-db <- db %>% select(-title, -description)
+db <- db %>% select(-title, -description, -num_ambientes)
 
 db_train <- db %>% filter(muestra == "train") %>% select(-muestra)
-db_test  <- db %>% filter(muestra == "test")  %>% select(-muestra, -obj_price, -obj_log_price)
+db_test  <- db %>% filter(muestra == "test")  %>%
+  select(-muestra, -obj_price, -obj_log_price, -id_grupo_anuncio)
 
 saveRDS(db_train, file.path(ruta_proc, "db_train.rds"))
 saveRDS(db_test,  file.path(ruta_proc, "db_test.rds"))
