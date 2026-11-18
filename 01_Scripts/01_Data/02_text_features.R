@@ -4,7 +4,9 @@
 #           anuncio de train y test:
 #           - números escritos en el texto: área en m2, piso, número de niveles,
 #             parqueaderos, habitaciones y baños;
-#           - dummies de características mencionadas (terraza, gimnasio, etc.);
+#           - estrato escrito en el texto ("estrato 6");
+#           - dummies de características mencionadas (terraza, gimnasio, etc.),
+#             de palabras de lujo y de barrios de alto precio;
 #           - largo de la descripción;
 #           - área final: surface_total o surface_covered cuando existen y son
 #             razonables; si no, el área extraída del texto.
@@ -136,8 +138,21 @@ db <- db %>%
     # inmueble completo y se trata como faltante.
     num_area_texto   = if_else(!is.na(num_area_texto) & bedrooms > 0 &
                                  num_area_texto < 10 * bedrooms,
-                               NA_real_, num_area_texto)
-  )
+                               NA_real_, num_area_texto),
+    # Áreas de tres dígitos escritas con un decimal sin separador ("677 m2"
+    # por 67,7 m2). Cuando el área por habitación supera el percentil 99 de
+    # las áreas de surface_total (100 m2 por habitación en apartamentos y
+    # 180 m2 en casas) y el valor dividido por 10 sigue siendo un área
+    # válida, se divide por 10.
+    limite_area_hab  = if_else(property_type == "Casa", 180, 100),
+    num_area_texto   = if_else(!is.na(num_area_texto) & num_area_texto >= 150 &
+                                 num_area_texto / pmax(bedrooms, 1, na.rm = TRUE) > limite_area_hab,
+                               num_area_texto / 10, num_area_texto),
+    # Estrato escrito en el texto ("estrato 6"); si hay varios, el primero.
+    num_estrato_texto = as.numeric(str_match(texto, "\\bestrato (\\d)\\b")[, 2]),
+    num_estrato_texto = if_else(num_estrato_texto %in% 1:6, num_estrato_texto, NA_real_)
+  ) %>%
+  select(-limite_area_hab)
 
 # ------------------------------------------------------------------------------
 # 3. Dummies de características mencionadas
@@ -163,7 +178,17 @@ palabras_clave <- c(
   bin_salon_comunal = "salon comunal|salon social",
   bin_jardin       = "jardin|zonas verdes",
   bin_estrenar     = "para estrenar|nuevo|sobre planos",
-  bin_parque_cerca = "frente al parque|cerca al parque|cerca de parque"
+  bin_parque_cerca = "frente al parque|cerca al parque|cerca de parque",
+  bin_lujo         = "lujo|exclusiv|alto nivel|premium",
+  bin_vista_ciudad = "vista (a la|sobre la|de la) ciudad|vista panoramica",
+  # Barrios de alto precio de Chapinero y sus alrededores mencionados en el
+  # anuncio. Chicó y Rosales tienen dummy propia; el resto se agrupa porque
+  # cada uno aparece en muy pocos anuncios de train.
+  bin_chico        = "\\bchico\\b",
+  bin_rosales      = "\\brosales\\b",
+  bin_barrio_alto  = paste("\\bchico\\b|\\brosales\\b|la cabrera|el retiro|el nogal|antiguo country",
+                           "el refugio|parque (de la )?93|virrey|emaus|quinta camacho",
+                           "zona g\\b|zona t\\b|chapinero alto", sep = "|")
 )
 
 for (nombre in names(palabras_clave)) {
@@ -201,8 +226,8 @@ db <- db %>%
 text_features <- db %>%
   select(property_id, muestra, num_area, cat_fuente_area, num_area_texto,
          num_piso_texto, num_niveles_texto, num_parq_texto, num_parq_comp,
-         num_habitac_texto, num_banos_texto, num_banos_comp, num_palabras,
-         starts_with("bin_"))
+         num_habitac_texto, num_banos_texto, num_banos_comp, num_estrato_texto,
+         num_palabras, starts_with("bin_"))
 
 saveRDS(text_features, here("02_Data", "Processed", "text_features.rds"))
 
@@ -214,7 +239,7 @@ saveRDS(text_features, here("02_Data", "Processed", "text_features.rds"))
 text_features %>%
   group_by(muestra) %>%
   summarise(across(c(num_area, num_area_texto, num_piso_texto, num_parq_texto,
-                     num_habitac_texto, num_banos_texto),
+                     num_habitac_texto, num_banos_texto, num_estrato_texto),
                    ~ round(100 * mean(!is.na(.x)), 1)),
             across(starts_with("bin_"), ~ round(100 * mean(.x), 1))) %>%
   pivot_longer(-muestra, names_to = "variable", values_to = "porcentaje") %>%

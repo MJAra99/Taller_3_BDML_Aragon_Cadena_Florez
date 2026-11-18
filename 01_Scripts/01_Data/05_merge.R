@@ -5,6 +5,8 @@
 #           - área, baños y parqueaderos con la mejor fuente disponible;
 #           - variables derivadas (área por habitación, año del anuncio como
 #             factor);
+#           - rezago espacial del precio: mediana del precio por m2 y del log
+#             del precio de los inmuebles de train más cercanos;
 #           - imputación de faltantes: cada variable numérica con faltantes
 #             recibe una dummy bin_<variable>_na y sus faltantes se reemplazan
 #             por la mediana de train. El área y los baños se imputan con la
@@ -107,6 +109,61 @@ db <- db %>%
     num_area_por_habitac = num_area / pmax(num_habitac, 1)
   ) %>%
   select(-grupo_habitac, -med_area, -med_banos)
+
+# ------------------------------------------------------------------------------
+# 2.1 Rezago espacial del precio
+# Para cada inmueble (de train y de test) se buscan los inmuebles de train más
+# cercanos y se calcula:
+# - num_rez_precio_m2_k10 y num_rez_precio_m2_k30: mediana del precio por m2
+#   de los 10 y 30 vecinos más cercanos, usando solo vecinos con área
+#   observada (sin imputar);
+# - num_rez_log_precio_k10: mediana del log del precio de los 10 vecinos más
+#   cercanos;
+# - num_rez_dist_k10: distancia en metros al décimo vecino, que indica qué
+#   tan densa es la información de precios alrededor del inmueble.
+# En train se excluyen como vecinos el propio inmueble y los anuncios de su
+# mismo grupo (misma descripción y precio), para que la variable no contenga
+# el precio del inmueble. Los inmuebles de test usan como vecinos a todos los
+# de train.
+# ------------------------------------------------------------------------------
+
+# Índices (sobre `ref`) de los `k` vecinos más cercanos de cada fila de
+# `consulta`, sin contar los vecinos del mismo grupo de anuncio. Se piden
+# `k_busqueda` candidatos para tener margen después de excluir.
+fun_vecinos <- function(consulta, ref, k, k_busqueda = 80) {
+  cercanos <- kNN(as.matrix(ref[, c("num_x", "num_y")]), k = min(k_busqueda, nrow(ref) - 1),
+                  query = as.matrix(consulta[, c("num_x", "num_y")]))
+  grupo_ref <- ref$id_grupo_anuncio
+  map(seq_len(nrow(consulta)), function(i) {
+    ids <- cercanos$id[i, ]
+    dist <- cercanos$dist[i, ]
+    validos <- is.na(consulta$id_grupo_anuncio[i]) | grupo_ref[ids] != consulta$id_grupo_anuncio[i]
+    list(id = head(ids[validos], k), dist = head(dist[validos], k))
+  })
+}
+
+ref_todos <- db %>% filter(muestra == "train")
+ref_area  <- ref_todos %>% filter(bin_area_na == 0)
+
+vecinos_todos <- fun_vecinos(db, ref_todos, k = 10)
+vecinos_area  <- fun_vecinos(db, ref_area,  k = 30)
+
+precio_m2_ref <- ref_area$obj_price / ref_area$num_area
+
+db <- db %>%
+  mutate(
+    num_rez_precio_m2_k10  = map_dbl(vecinos_area, ~ median(precio_m2_ref[head(.x$id, 10)])),
+    num_rez_precio_m2_k30  = map_dbl(vecinos_area, ~ median(precio_m2_ref[.x$id])),
+    num_rez_log_precio_k10 = map_dbl(vecinos_todos, ~ median(ref_todos$obj_log_price[.x$id])),
+    num_rez_dist_k10       = map_dbl(vecinos_todos, ~ max(.x$dist))
+  )
+
+db %>%
+  filter(muestra == "train") %>%
+  summarise(cor_log_precio_m2_vs_rezago_m2 = cor(log(obj_price / num_area),
+                                                 log(num_rez_precio_m2_k10)),
+            cor_log_precio_vs_rezago_log_precio = cor(obj_log_price, num_rez_log_precio_k10)) %>%
+  print()
 
 # ------------------------------------------------------------------------------
 # 3. Imputación del resto de variables numéricas con la mediana de train

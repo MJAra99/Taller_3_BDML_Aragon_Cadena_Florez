@@ -8,7 +8,7 @@
 #           - número de elementos a menos de un radio;
 #           - resumen (mediana, promedio, moda o proporción) de los valores de
 #             las manzanas cercanas, con el año catastral igual al año del
-#             anuncio;
+#             anuncio, y valor de la manzana más cercana;
 #           - atributos del polígono donde cae la propiedad (UPZ, UPL,
 #             localidad, zona de amenaza, etc.).
 #           Todos los cálculos se hacen en EPSG:9377, en metros.
@@ -48,18 +48,24 @@ anio_ref <- pmin(pmax(puntos$num_anio, min(anios_catastro)), max(anios_catastro)
 
 # Aplica un resumen por año: para los anuncios de cada año usa solo las
 # manzanas de ese año. `tabla` tiene columnas x, y, anio y valor.
-fun_por_anio <- function(tabla, radio, fun = median, tipo = "resumen", condicion = NULL) {
+# `tipo` puede ser "resumen" (resumen `fun` de las manzanas a menos de
+# `radio` metros), "proporcion" (proporción de manzanas a menos de `radio`
+# metros que cumplen la condición lógica de `valor`) o "cercana" (valor de la
+# manzana más cercana; `radio` no se usa).
+fun_por_anio <- function(tabla, radio = NULL, fun = median, tipo = "resumen") {
   resultado <- rep(NA_real_, nrow(puntos))
   for (a in anios_catastro) {
     filas <- which(anio_ref == a)
     ref <- tabla %>% filter(anio == a, !is.na(valor))
     if (length(filas) == 0 || nrow(ref) == 0) next
     coords <- as.matrix(ref[, c("x", "y")])
-    resultado[filas] <- if (tipo == "resumen") {
-      fun_resumen_radio(puntos[filas, ], coords, ref$valor, radio, fun)
-    } else {
-      fun_proporcion_radio(puntos[filas, ], coords, ref$valor, radio)
-    }
+    resultado[filas] <- switch(
+      tipo,
+      resumen    = fun_resumen_radio(puntos[filas, ], coords, ref$valor, radio, fun),
+      proporcion = fun_proporcion_radio(puntos[filas, ], coords, ref$valor, radio),
+      cercana    = ref$valor[kNN(coords, k = 1,
+                                 query = st_coordinates(puntos[filas, ]))$id[, 1]]
+    )
   }
   resultado
 }
@@ -82,7 +88,12 @@ manzanas <- v_ref %>%
 ubicacion_anio <- manzanas %>% distinct(MANCODIGO, anio, .keep_all = TRUE) %>%
   select(MANCODIGO, anio, x, y)
 
+# Mediana de las manzanas a 100, 200 y 500 m, y valor de la manzana más
+# cercana. Los radios pequeños describen la cuadra y los grandes el sector.
+sp$num_vref_m2_mz   <- fun_por_anio(manzanas, tipo = "cercana")
+sp$num_vref_m2_100m <- fun_por_anio(manzanas, radio = 100)
 sp$num_vref_m2_200m <- fun_por_anio(manzanas, radio = 200)
+sp$num_vref_m2_500m <- fun_por_anio(manzanas, radio = 500)
 
 # Ubica una tabla sin geometría (MANCODIGO, año, valor) con las coordenadas de
 # las manzanas. Si una manzana no aparece en ese año, se usa su ubicación en
@@ -114,7 +125,10 @@ av_ph <- fun_leer_capa("02_avaluo_ph")
 coords_ph <- fun_coords(av_ph)
 tabla_ph <- tibble(x = coords_ph[, 1], y = coords_ph[, 2],
                    anio = fun_anio(av_ph$VIGENCIA), valor = as.numeric(av_ph$AV_CAT_PH))
+sp$num_avaluo_ph_m2_mz   <- fun_por_anio(tabla_ph, tipo = "cercana")
+sp$num_avaluo_ph_m2_100m <- fun_por_anio(tabla_ph, radio = 100)
 sp$num_avaluo_ph_m2_200m <- fun_por_anio(tabla_ph, radio = 200)
+sp$num_avaluo_ph_m2_500m <- fun_por_anio(tabla_ph, radio = 500)
 
 # 1.3 a 1.6 Capas sin geometría, ubicadas con MANCODIGO.
 fun_mensaje("Catastro: avalúo, altura, uso y densidad predial por manzana")
@@ -135,12 +149,15 @@ sp$num_prop_comer_300m <- fun_por_anio(uso %>% mutate(valor = str_detect(valor, 
                                        radio = 300, tipo = "proporcion")
 
 # 1.7 Estrato: el más frecuente entre las manzanas residenciales a menos de
-# 200 m (el estrato 0 corresponde a manzanas no residenciales).
+# 200 m, y el de la manzana residencial más cercana (el estrato 0 corresponde
+# a manzanas no residenciales).
 fun_mensaje("Estrato")
 estrato <- fun_leer_capa("04_estrato") %>% mutate(ESTRATO = as.numeric(ESTRATO))
 estrato_res <- estrato %>% filter(ESTRATO %in% 1:6)
 sp$num_estrato_200m <- fun_resumen_radio(puntos, fun_coords(estrato_res), estrato_res$ESTRATO,
                                          radio = 200, fun = function(v) as.numeric(fun_moda(v)))
+sp$num_estrato_mz <- estrato_res$ESTRATO[kNN(fun_coords(estrato_res), k = 1,
+                                             query = st_coordinates(puntos))$id[, 1]]
 
 # ------------------------------------------------------------------------------
 # 2. Comodidades y comercio
