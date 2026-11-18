@@ -4,3 +4,5 @@ modelo,familia,hiperparametros,envio,fecha,mae_cv_aleatoria,mae_cv_bloques,mae_c
 07_cart_completa,CART,cp = 0.0008111,07_cart_completa,2026-11-17,140942899.608874,150378831.10051,153359554.227103,166744830.132694
 08_rf_completa,Random Forest,"mtry = 40, splitrule = variance, min.node.size = 5",08_rf_completa,2026-11-17,102563919.730988,132184480.146788,135274391.630202,145791668.570825
 09_xgb_completa,XGBoost,"max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 276",09_xgb_completa,2026-11-17,109526498.261744,125067698.817419,127580007.646553,134484681.062113
+10_xgb_na_nativo,XGBoost,"gamma_peso = 0, max_depth = 6, min_child_weight = 5, eta = 0.05, rondas = 242",10_xgb_na_nativo,2026-11-18,109914223.3129,124621756.54166,127217650.835816,134058742.634957
+11_xgb_pesos,XGBoost,"gamma_peso = 0.5, max_depth = 8, min_child_weight = 1, eta = 0.05, rondas = 196",11_xgb_pesos,2026-11-18,107882674.131292,125793446.459411,128234850.109316,136475182.945143
