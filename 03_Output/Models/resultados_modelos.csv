@@ -6,3 +6,4 @@ modelo,familia,hiperparametros,envio,fecha,mae_cv_aleatoria,mae_cv_bloques,mae_c
 09_xgb_completa,XGBoost,"max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 276",09_xgb_completa,2026-11-17,109526498.261744,125067698.817419,127580007.646553,134484681.062113
 10_xgb_na_nativo,XGBoost,"gamma_peso = 0, max_depth = 6, min_child_weight = 5, eta = 0.05, rondas = 242",10_xgb_na_nativo,2026-11-18,109914223.3129,124621756.54166,127217650.835816,134058742.634957
 11_xgb_pesos,XGBoost,"gamma_peso = 0.5, max_depth = 8, min_child_weight = 1, eta = 0.05, rondas = 196",11_xgb_pesos,2026-11-18,107882674.131292,125793446.459411,128234850.109316,136475182.945143
+12_xgb_base_final,XGBoost,"max_depth = 6, min_child_weight = 10, eta = 0.05, rondas = 245",12_xgb_base_final,2026-11-18,106452668.913905,114420049.2465,115978259.439464,120840399.931616
