@@ -1,0 +1,11 @@
+esquema,reponderacion,mae,kaggle_16
+Aleatoria,Sin reponderar,104876385.5462379,156910032.24
+Aleatoria,Composición de test (celdas),103785502.98781502,156910032.24
+Aleatoria,Pesos adversariales,115368993.40560712,156910032.24
+Aleatoria,Celdas x adversariales,116868226.44353572,156910032.24
+Aleatoria,Solo Chapinero (train),123431741.5473784,156910032.24
+Localidades,Sin reponderar,121237682.04685359,156910032.24
+Localidades,Composición de test (celdas),127122357.95227638,156910032.24
+Localidades,Pesos adversariales,131771719.01062459,156910032.24
+Localidades,Celdas x adversariales,133327148.1289644,156910032.24
+Localidades,Solo Chapinero (train),139396270.4302564,156910032.24

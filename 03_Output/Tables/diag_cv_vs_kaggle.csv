@@ -1,0 +1,25 @@
+par,esquema,metrica,dif_cv,dif_kaggle,acierta
+Base + texto (15 vs 16),aleatoria,mae,1040981.5811915398,-676614.0199999809,FALSE
+Base + texto (15 vs 16),aleatoria,mae_chap,-1793652.7566538453,-676614.0199999809,TRUE
+Base + texto (15 vs 16),aleatoria,mae_pond,-3003270.83403109,-676614.0199999809,TRUE
+Base + texto (15 vs 16),bloques,mae,985837.6538978815,-676614.0199999809,FALSE
+Base + texto (15 vs 16),bloques,mae_chap,11313681.398017019,-676614.0199999809,FALSE
+Base + texto (15 vs 16),bloques,mae_pond,3641701.742493242,-676614.0199999809,FALSE
+Base + texto (15 vs 16),bloques_buffer,mae,1322926.792673722,-676614.0199999809,FALSE
+Base + texto (15 vs 16),bloques_buffer,mae_chap,4759394.1283655465,-676614.0199999809,FALSE
+Base + texto (15 vs 16),bloques_buffer,mae_pond,4428414.7899902165,-676614.0199999809,FALSE
+Base + texto (15 vs 16),localidad,mae,2378508.934777826,-676614.0199999809,FALSE
+Base + texto (15 vs 16),localidad,mae_chap,2473486.5750379562,-676614.0199999809,FALSE
+Base + texto (15 vs 16),localidad,mae_pond,2577749.609098226,-676614.0199999809,FALSE
+Base final (13 vs 14),aleatoria,mae,1368675.559846878,-3238898.9399999976,FALSE
+Base final (13 vs 14),aleatoria,mae_chap,-3830261.275100574,-3238898.9399999976,TRUE
+Base final (13 vs 14),aleatoria,mae_pond,-3009556.4171608686,-3238898.9399999976,TRUE
+Base final (13 vs 14),bloques,mae,1702610.041602701,-3238898.9399999976,FALSE
+Base final (13 vs 14),bloques,mae_chap,14311438.27137646,-3238898.9399999976,FALSE
+Base final (13 vs 14),bloques,mae_pond,4370637.607701391,-3238898.9399999976,FALSE
+Base final (13 vs 14),bloques_buffer,mae,1680677.6764723659,-3238898.9399999976,FALSE
+Base final (13 vs 14),bloques_buffer,mae_chap,3099192.44654423,-3238898.9399999976,FALSE
+Base final (13 vs 14),bloques_buffer,mae_pond,1992494.998338163,-3238898.9399999976,FALSE
+Base final (13 vs 14),localidad,mae,3992862.821264535,-3238898.9399999976,FALSE
+Base final (13 vs 14),localidad,mae_chap,14463387.279385954,-3238898.9399999976,FALSE
+Base final (13 vs 14),localidad,mae_pond,6669665.727597743,-3238898.9399999976,FALSE
