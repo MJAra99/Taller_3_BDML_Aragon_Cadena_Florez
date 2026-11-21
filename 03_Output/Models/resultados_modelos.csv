@@ -14,3 +14,5 @@ modelo,familia,hiperparametros,envio,fecha,mae_cv_aleatoria,mae_cv_bloques,mae_c
 17_nnet_texto,Red neuronal,"size = 8, decay = 1",17_nnet_texto,2026-11-19,119874834.224338,104490860560.681,41645084688.45,348396125.32407
 18_xgb_pesos_texto_sesgo_ponderado,XGBoost,"gamma_peso = 0.5, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 248, factor = 1.03",18_xgb_pesos_texto_sesgo_ponderado,2026-11-20,NA,NA,NA,121618418.514994
 19_xgb_pesos_texto_sesgo_chapinero,XGBoost,"gamma_peso = 0.5, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 248, factor = 1.08",19_xgb_pesos_texto_sesgo_chapinero,2026-11-20,NA,NA,NA,126727021.869707
+20_xgb_mejorado,XGBoost,"gamma_peso = 0.5, peso_casa = 0.3, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 584",20_xgb_mejorado,2026-11-21,96954479.0935366,105017677.502998,106188920.5936,113936104.151141
+21_xgb_mejorado_sesgo,XGBoost,"gamma_peso = 0.5, peso_casa = 0.3, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 584, factor = 1.05",21_xgb_mejorado_sesgo,2026-11-21,101824691.948665,110170803.68797,110717687.873619,115758193.88258
