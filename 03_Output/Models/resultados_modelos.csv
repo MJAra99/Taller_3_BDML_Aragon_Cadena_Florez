@@ -16,3 +16,9 @@ modelo,familia,hiperparametros,envio,fecha,mae_cv_aleatoria,mae_cv_bloques,mae_c
 19_xgb_pesos_texto_sesgo_chapinero,XGBoost,"gamma_peso = 0.5, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 248, factor = 1.08",19_xgb_pesos_texto_sesgo_chapinero,2026-11-20,NA,NA,NA,126727021.869707
 20_xgb_mejorado,XGBoost,"gamma_peso = 0.5, peso_casa = 0.3, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 584",20_xgb_mejorado,2026-11-21,96954479.0935366,105017677.502998,106188920.5936,113936104.151141
 21_xgb_mejorado_sesgo,XGBoost,"gamma_peso = 0.5, peso_casa = 0.3, max_depth = 6, min_child_weight = 1, eta = 0.05, rondas = 584, factor = 1.05",21_xgb_mejorado_sesgo,2026-11-21,101824691.948665,110170803.68797,110717687.873619,115758193.88258
+22_xgb_precio_m2,XGBoost,"objetivo = log(precio/m2), gamma_peso = 0.5, max_depth = 6, min_child_weight = 1, colsample = 0.7, eta = 0.05, rondas = 559, columnas = 169",22_xgb_precio_m2,2026-11-21,101781550.027923,NA,NA,121732310.536966
+23_xgb_palabras_m2,XGBoost,"objetivo = log(precio/m2), gamma_peso = 0.5, max_depth = 6, min_child_weight = 1, colsample = 0.5, eta = 0.05, rondas = 684, columnas = 702",23_xgb_palabras_m2,2026-11-21,99797250.5649059,NA,NA,120106628.050973
+24_nnet_robusta,Red neuronal,"size = 8, decay = 0.5, entradas = cuantil normal, objetivo = log(precio/m2)",24_nnet_robusta,2026-11-21,118453584.941258,NA,NA,145317488.098186
+25_ensamble,Ensamble,"16_xgb_pesos_texto = 0, 20_xgb_mejorado = 0.457, 22_xgb_precio_m2 = 0, 23_xgb_palabras_m2 = 0.543, 24_nnet_robusta = 0",25_ensamble,2026-11-21,95998508.3058082,NA,NA,114050443.980313
+26_ensamble_calibrado,Ensamble,"a = -0.0051, b = 1.025",26_ensamble_calibrado,2026-11-21,95889071.8266347,NA,NA,113750771.67047
+27_ensamble_calibrado_reanuncios,Ensamble,"lambda = 1, dist_max_m = 3000, n_test = 131",27_ensamble_calibrado_reanuncios,2026-11-21,78681000.9609214,NA,NA,113750771.67047
