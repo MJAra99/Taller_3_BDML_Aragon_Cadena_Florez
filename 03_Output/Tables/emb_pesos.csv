@@ -1,0 +1,7 @@
+modelo,peso
+20_xgb_mejorado,0.2603223910005175
+23_xgb_palabras_m2,0.2300793699744926
+xgb_completo_palabras_m2_prof6,0.2657976008288904
+xgb_completo_palabras_m2_prof8,0.24373748040961707
+xgb_emb_prof6,6.315778648122873e-5
+nnet_emb,1.1189039368123992e-15
