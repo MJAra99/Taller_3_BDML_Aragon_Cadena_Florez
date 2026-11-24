@@ -4,16 +4,16 @@
 #           ajustes de sesgo 18/19) con cuatro ideas que todavía no se han
 #           probado en el repositorio:
 #
-#   A. Diversidad de modelos (envíos 22, 23 y 24). Tres modelos que se
-#      equivocan distinto que el 16:
+#   A. Tres modelos que se equivocan distinto que el 16:
+#      
 #        22_xgb_precio_m2     XGBoost del log del precio POR M2 (el área entra
-#                             como multiplicador exacto, un "offset");
+#                             como multiplicador exacto);
 #        23_xgb_palabras_m2   el mismo, más las palabras del anuncio como
 #                             columnas del árbol (no solo el resumen Lasso);
 #        24_nnet_robusta      red neuronal con entradas acotadas, que corrige
 #                             las predicciones explosivas del 17_nnet_texto.
-#   B. Ensamble (25). Promedio ponderado del 16 con 22, 23 y 24 (y el 20, si
-#      ya existe), con pesos estimados fuera de muestra.
+#   B. Ensamble (25). Promedio ponderado del 16 con 22, 23 y 24, 
+#     con pesos estimados fuera de muestra.
 #   C. Calibración "estirada" (26). Los ajustes 18 y 19 multiplican todo por
 #      un factor constante (corrigen el NIVEL). Aquí también se corrige la
 #      PENDIENTE: el modelo encoge los precios hacia la media (sobreestima lo
@@ -24,15 +24,6 @@
 #      ~12-14 M, contra ~100 M del mejor modelo. Para esos inmuebles de test
 #      se usa el precio observado del anuncio de train.
 #
-# Evidencia previa (réplica en Python del XGBoost del equipo con la base
-# actual, mismas variables, CV aleatoria por grupos y por localidades):
-#   - Ningún modelo nuevo le gana por sí solo al de referencia (±0,5 M).
-#   - El promedio de los cuatro XGBoost baja el MAE ~2 M en las dos CV
-#     (aleatoria 103,4 -> 101,3; localidades 118,0 -> 115,6): la ganancia
-#     está en la COMBINACIÓN, no en cada modelo.
-#   - La calibración estirada baja el sesgo en Chapinero (localidades:
-#     -27 -> -12 M) con una mejora pequeña del MAE total.
-#   - 131 inmuebles de test tienen un re-anuncio en train a menos de 3 km.
 #
 # Validación: la del equipo. Los hiperparámetros, los pesos del ensamble y la
 #   calibración se escogen con la CV ALEATORIA por grupos y el MAE ponderado
@@ -54,9 +45,6 @@
 #           03_Output/Tables/ensamble_{pesos,comparacion,reanuncios}.csv
 #           03_Output/Figures/ensamble_comparacion.{pdf,png}
 #
-# Tiempo aproximado: 35-60 min (la red neuronal toma ~20 min; se puede
-# apagar con correr_red <- FALSE). Cada modelo guarda sus predicciones fuera
-# de muestra; si el archivo ya existe se carga en vez de re-entrenar.
 # ==============================================================================
 
 source(here::here("01_Scripts", "00_utils.R"))
@@ -72,12 +60,11 @@ nucleos <- max(1, parallel::detectCores() - 1)
 limites_precio <- c(3e8, 1.65e9)
 recortar <- function(p) pmin(pmax(p, limites_precio[1]), limites_precio[2])
 
-correr_red <- TRUE    # FALSE para saltar la red neuronal (la parte más lenta)
-incluir_20 <- TRUE    # incluir el 20_xgb_mejorado en el ensamble si ya existe
+correr_red <- TRUE    # FALSE por si queremos saltarnos la red neuronal
+incluir_20 <- TRUE    # incluir el 20_xgb_mejorado en el ensamble
 
-# ------------------------------------------------------------------------------
-# 1. Datos, folds, pesos y matrices
-# ------------------------------------------------------------------------------
+
+##### 1. Datos, folds, pesos y matrices #####
 datos   <- fun_datos_modelo()
 folds   <- fun_todos_folds(datos$train)
 f_ale   <- folds$aleatoria        # escoger (como 13_xgb_mejorado.R)
@@ -86,7 +73,7 @@ n_train <- nrow(datos$train)
 
 # Faltantes nativos, igual que 10_xgb_pesos_texto.R / 12_ajuste_sesgo.R: donde
 # 05_merge.R imputó la mediana (bin_<x>_na = 1) se vuelve a poner NA y XGBoost
-# aprende hacia qué lado mandar los faltantes.
+# aprende hacia qué lado mandar los faltantes
 fun_restaurar_na <- function(df) {
   df <- df %>% mutate(num_vref_m2_200m = na_if(num_vref_m2_200m, 0))
   banderas <- str_subset(names(df), "^bin_.+_na$")
@@ -122,10 +109,9 @@ stopifnot(!anyNA(w))
 peso_16 <- w^hp16$gamma_peso
 peso_16 <- peso_16 / mean(peso_16)
 
-# Offset del precio por m2: log del área. El área se acota a los percentiles
+# El área se acota a los percentiles
 # 1 y 99 de train (44 y ~386 m2) porque un área absurda (p. ej. 1.000 m2 en
-# un apartamento) multiplicaría la predicción. La predicción final vuelve a
-# pesos: log(precio) = log(precio por m2) predicho + offset.
+# un apartamento) multiplicaría la predicción. 
 lim_area  <- quantile(datos$train$num_area, c(0.01, 0.99), na.rm = TRUE)
 off_train <- log(pmin(pmax(datos$train$num_area, lim_area[1]), lim_area[2]))
 off_test  <- log(pmin(pmax(datos$test$num_area,  lim_area[1]), lim_area[2]))
