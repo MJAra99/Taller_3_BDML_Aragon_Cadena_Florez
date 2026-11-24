@@ -1,0 +1,4 @@
+margen,descuento,porc_negocios,porc_compras_pagando_de_mas,ganancia_por_100_ofertas,grupo,escenario
+0.3,0.05,7.452149994784317,64.78413700897447,-251.3809575533703,Train ponderado por parecido con test,El vendedor cede hasta 5%
+0.3,0.1,10.79460673457789,44.72428854004139,-113.74691582629615,Train ponderado por parecido con test,El vendedor cede hasta 10%
+0.24,0.15,29.095055008264104,32.1665324763317,427.2232177819104,Train ponderado por parecido con test,El vendedor cede hasta 15%

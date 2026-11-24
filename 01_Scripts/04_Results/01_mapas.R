@@ -401,7 +401,7 @@ mapa_8 <- ggplot() +
                        guide = guide_colorbar(barwidth = 12, barheight = 0.5,
                                               title.position = "top")) +
   coord_ciudad() +
-  labs(title = "El modelo con pesos aprende sobre todo de los anuncios parecidos a Chapinero",
+  labs(title = "El modelo con pesos aprende más de las zonas parecidas a test",
        subtitle = "Peso promedio por UPZ de los anuncios de train, según qué tanto se parecen a los de test.",
        caption = "Escala logarítmica. Gris: UPZ con menos de 20 anuncios. Borde negro: Chapinero.") +
   tema_mapa
