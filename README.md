@@ -25,7 +25,7 @@ El mejor envío es el **29_ensamble_embeddings**: MAE de 151,5 millones de pesos
    source("01_Scripts/main.R")
    ```
 
-`01_Scripts/main.R` corre todos los scripts en el orden en que dependen unos de otros, cada uno en un proceso de R nuevo, y regenera las bases procesadas, los modelos, los envíos y todas las tablas y figuras. Si un script falla, se detiene e indica cuál fue. Los paquetes de R se instalan solos con `pacman::p_load` la primera vez.
+`01_Scripts/main.R` corre todos los scripts en el orden en que dependen unos de otros, cada uno en un proceso de R nuevo, y regenera las bases procesadas, los modelos, los envíos, todas las tablas y figuras, y los PDF de las dos presentaciones. Si un script falla, se detiene e indica cuál fue. Los paquetes de R se instalan solos con `pacman::p_load` la primera vez.
 
 **Tiempo:** entre 7 y 9 horas en un computador personal. Al final, `main.R` imprime cuánto tardó cada script.
 
@@ -41,6 +41,7 @@ El mejor envío es el **29_ensamble_embeddings**: MAE de 151,5 millones de pesos
 - **R 4.3 o superior** y RStudio. Los paquetes principales son `tidyverse`, `here`, `caret`, `sf`, `dbscan`, `spatialsample`, `glmnet`, `rpart`, `ranger`, `xgboost` (versión 3), `nnet`, `gamlr`, `maptpx`, `tidytext`, `SnowballC`, `elevatr`, `scales` y `patchwork`.
 - **Conexión a internet**, para descargar las capas de Mapas Bogotá y la elevación la primera vez.
 - **Python 3.10 o superior**, solo si `correr_python <- TRUE`: `pip install -r requirements.txt`.
+- **LaTeX** (MiKTeX, TeX Live o TinyTeX) con `beamer` y `tikz`, para compilar las presentaciones. Si no está instalado, `main.R` genera todo lo demás y avisa que no pudo compilarlas.
 
 ### Nota sobre la reproducibilidad
 
@@ -51,7 +52,6 @@ Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se es
 ```
 ├── README.md
 ├── requirements.txt             Librerías de Python (solo para los embeddings)
-├── Problem_Set_3.pdf            Enunciado
 ├── 01_Scripts
 │   ├── main.R                   Archivo principal: corre todo el proyecto
 │   ├── 00_utils.R               Funciones comunes (carga, validación cruzada, MAE, envíos)
@@ -71,7 +71,10 @@ Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se es
 │   ├── Models                   Modelos estimados (.rds) y resultados_modelos.csv
 │   ├── Predictions              Predicciones fuera de muestra de la validación cruzada
 │   └── Submissions              Los archivos de envío a Kaggle
-└── 04_Slides                    Presentaciones
+└── 04_Slides                    Presentaciones en Beamer y sus PDF
+    ├── best_equipo_01.tex       Best Model Deep Dive
+    ├── compare_equipo_01.tex    Algorithm Comparison
+    └── comunes                  Preámbulo y las 10 diapositivas que comparten las dos
 ```
 
 **Prefijos de las variables:** `num_` numéricas, `bin_` dummies (`bin_<x>_na` marca si `num_<x>` fue imputada), `cat_` categóricas, `obj_` variable objetivo (precio y log del precio). Las funciones propias empiezan por `fun_`.
@@ -129,6 +132,11 @@ Cada modelo guarda su envío en `03_Output/Submissions/<envío>.csv`, el modelo 
 |---|---|---|
 | `01_mapas.R` | Mapas de Bogotá: train y test, precio por m2, predicción, error, cobertura, folds, MAE por localidad, pesos y contexto urbano | figuras `mapa_01` a `mapa_09`; `mapa_mae_localidad_modelos.csv` |
 | `02_negocio.R` | Riesgo de sobreestimación, margen de seguridad, semáforo de compra, curva de decisión y Kaggle frente a negocio | figuras `negocio_01` a `negocio_05`; tablas `negocio_*` |
+| `03_figuras_presentaciones.R` | Escalera del error, importancia por grupo, familias, validaciones frente a Kaggle, tablas comparativas y las cifras que citan las diapositivas | figuras y tablas `pres_*`; `pres_cifras.tex` |
+
+### 4. Presentaciones (`04_Slides`)
+
+`main.R` compila al final `best_equipo_01.tex` y `compare_equipo_01.tex` con `pdflatex`. Las dos toman las figuras de `03_Output/Figures`, las tablas de `03_Output/Tables` y las cifras del texto de `03_Output/Tables/pres_cifras.tex`, así que todo lo que muestran sale del código. Las 10 diapositivas que comparten están en `04_Slides/comunes`. Cada diapositiva tiene notas para quien expone (`\note`).
 
 ## De dónde sale cada figura y tabla
 
@@ -148,4 +156,46 @@ Todas quedan en `03_Output/Figures` (PDF y PNG) y `03_Output/Tables` (CSV y TeX)
 | `emb_*` | `03_Models/16_embeddings_red.R` |
 | `mapa_*` | `04_Results/01_mapas.R` |
 | `negocio_*` | `04_Results/02_negocio.R` |
+| `pres_*` | `04_Results/03_figuras_presentaciones.R` |
 | `resultados_modelos.csv` | todos los scripts de `03_Models` |
+
+## De dónde sale cada diapositiva
+
+Las diapositivas C1 a C10 están en las dos presentaciones (`04_Slides/comunes/c01_*.tex` a `c10_*.tex`). Las figuras están en `03_Output/Figures` y las tablas en `03_Output/Tables`.
+
+| Diapositiva | Mensaje | Figura o tabla | Script |
+|---|---|---|---|
+| C1 | El mejor modelo se equivoca en 151,5 millones por vivienda | `pres_cifras.tex` y diagrama en TikZ | `04_Results/03_figuras_presentaciones.R` |
+| C2 | El reto: predecir donde casi no hay datos | `mapa_01_train_test` | `04_Results/01_mapas.R` |
+| C3 | Chapinero es más caro, casi todo apartamentos y con ubicación más imprecisa | `mapa_02_precio_m2_upz`; cifras de `pres_cifras.tex` | `01_mapas.R`; `03_figuras_presentaciones.R` |
+| C4 | Qué le agregamos a los datos | `mapa_09_contexto_urbano`; cifras de `pres_cifras.tex` | `01_mapas.R`; `03_figuras_presentaciones.R` |
+| C5 | Qué revela el modelo sobre los precios | `pres_importancia_grupos` | `03_figuras_presentaciones.R` |
+| C6 | Cada idea, cuánto bajó el error | `pres_escalera` | `03_figuras_presentaciones.R` |
+| C7 | Cómo validamos | `mapa_06_folds_espaciales` | `01_mapas.R` |
+| C8 | Le enseñamos al modelo a mirar lo que se parece a Chapinero | `mapa_08_pesos_upz` | `01_mapas.R` |
+| C9 | Lo que gana en Kaggle no es lo que gana la empresa | `negocio_05_kaggle_vs_negocio` | `04_Results/02_negocio.R` |
+| C10 | ¿Compraríamos? | `negocio_03_semaforo_test`; cifras de `pres_cifras.tex` | `02_negocio.R`; `03_figuras_presentaciones.R` |
+
+**`best_equipo_01` (Best Model Deep Dive).** Orden: portada, C1 a C8, B1, B2, B3, C9, B4, B5, B6 y C10.
+
+| Diapositiva | Mensaje | Figura o tabla | Script |
+|---|---|---|---|
+| B1 | El modelo distingue zonas dentro de Chapinero | `mapa_03_chapinero_prediccion_test` | `01_mapas.R` |
+| B2 | Dónde se equivoca: subestima las viviendas caras | `mapa_04_chapinero_error_oof`, `diag_sesgo_deciles` | `01_mapas.R`; `02_EDA/03_diagnostico_errores.R` |
+| B3 | Dónde el modelo tiene poca información para predecir | `mapa_05_chapinero_cobertura` | `01_mapas.R` |
+| B4 | Dónde pagaríamos de más | `negocio_01_riesgo_sobreestimacion_upz` | `02_negocio.R` |
+| B5 | Cuánto ofertar por debajo de la predicción en cada zona | `negocio_02_margen_seguridad_upz` | `02_negocio.R` |
+| B6 | La trampa de Zillow | `negocio_04_curva_margen` | `02_negocio.R` |
+
+**`compare_equipo_01` (Algorithm Comparison).** Orden: portada, C1, C2, C3, C4, C7, P1 a P5, C8, C6, P6, C5, P7, C9 y C10.
+
+| Diapositiva | Mensaje | Figura o tabla | Script |
+|---|---|---|---|
+| P1 | Seis familias, un ganador claro | `pres_familias` | `03_figuras_presentaciones.R` |
+| P2 | Por qué pierden los modelos simples | `pres_modelos_simples` | `03_figuras_presentaciones.R` |
+| P3 | Con los mismos datos, el algoritmo lo cambia todo | `pres_misma_base.tex` | `03_figuras_presentaciones.R` |
+| P4 | La validación aleatoria escoge el modelo equivocado | `pres_puestos_validacion` | `03_figuras_presentaciones.R` |
+| P5 | Dónde gana el boosting: el error por localidad | `mapa_07_mae_localidad_modelos` | `01_mapas.R` |
+| P6 | ¿Qué validación anticipa Kaggle? | `pres_cv_vs_kaggle`, `pres_publico_privado` | `03_figuras_presentaciones.R` |
+| P7 | Ventajas y desventajas de cada familia | `pres_ventajas.tex` | `03_figuras_presentaciones.R` |
+

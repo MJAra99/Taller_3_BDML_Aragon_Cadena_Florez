@@ -1,0 +1,16 @@
+envio,paso,kaggle_privado,mejora
+01_lm_base,"Base
+mínima",307716345.51,NA
+05_lm_completa,"+ entorno
+y texto",211866938.33,95849407.17999998
+09_xgb_completa,+ XGBoost,175225909.26,36641029.07000002
+12_xgb_base_final,"+ precio de
+vecinos",172102351.35,3123557.9099999964
+16_xgb_pesos_texto,"+ texto como
+datos",159473768.04,12628583.310000002
+21_xgb_mejorado_sesgo,"+ barrios y
+ajuste de nivel",154806123.48,4667644.560000002
+27_ensamble_calibrado_reanuncios,"+ ensamble y
+re-anuncios",152518447.89,2287675.5900000036
+29_ensamble_embeddings,"+ más
+semillas",151459023.72,1059424.169999987

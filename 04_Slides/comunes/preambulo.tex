@@ -1,0 +1,47 @@
+% ==============================================================================
+% preambulo.tex
+% Preámbulo común de las dos presentaciones (best_equipo_01 y compare_equipo_01).
+% Las figuras y tablas se toman de 03_Output, donde las generan los scripts del
+% repositorio, y las cifras citadas vienen de 03_Output/Tables/pres_cifras.tex
+% (01_Scripts/04_Results/03_figuras_presentaciones.R).
+% ==============================================================================
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+
+\graphicspath{{../03_Output/Figures/}}
+\input{../03_Output/Tables/pres_cifras.tex}
+
+% Colores
+\definecolor{azul}{HTML}{2166AC}
+\definecolor{rojo}{HTML}{B2182B}
+\definecolor{verde}{HTML}{1A9850}
+\definecolor{gris}{HTML}{595959}
+\definecolor{grisclaro}{HTML}{F2F2F2}
+
+% Tema sobrio: títulos en azul, sin íconos de navegación, número de página
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{frametitle}{fg=azul}
+\setbeamerfont{frametitle}{series=\bfseries, size=\large}
+\setbeamercolor{title}{fg=azul}
+\setbeamerfont{title}{series=\bfseries}
+\setbeamercolor{structure}{fg=azul}
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{footline}{%
+  \hfill\textcolor{gris}{\scriptsize Equipo 1 \quad \insertframenumber/\inserttotalframenumber}\hspace{1em}\vspace{0.6em}}
+
+% Cifra grande con su descripción. El argumento opcional es el ancho (por
+% defecto, un tercio del ancho de la diapositiva).
+\newcommand{\cifra}[3][0.3\textwidth]{%
+  \begin{minipage}[t]{#1}\centering
+    {\Huge\bfseries\color{azul}#2}\\[0.3em]
+    {\small\color{gris}#3}
+  \end{minipage}}
+
+% Mensaje corto debajo de una figura
+\newcommand{\lectura}[1]{\par\vspace{0.2em}{\small\color{gris}#1}}

@@ -1,0 +1,7 @@
+grupo,ganancia,principales
+Ubicación exacta y fecha,0.00586582924946256,"num_y, num_x, num_mes"
+Valor del suelo (Catastro),0.04222528312096234,"num_vref_m2_200m, num_vref_m2_200m_suav, num_vref_m2_500m"
+Entorno urbano y servicios,0.06288412177407421,"num_colegios_1km, num_ips_1km, num_dist_galerias"
+Precio de vecinos y comparables,0.1836735439425481,"num_comp_log_precio, num_rez_log_precio_k10, num_rez_precio_m2_k30"
+Texto del anuncio,0.30184603950561295,"num_txt_lasso_log_precio, num_txt_lasso_log_precio_m2, num_txt_topico_06"
+Tamaño y estructura,0.40350518240733985,"num_area, num_banos, num_habitac"

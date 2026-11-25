@@ -2,8 +2,9 @@
 # 01_Scripts/main.R
 # Archivo principal del Problem Set 3 (precios de vivienda en Chapinero).
 # Corre todos los scripts del repositorio en el orden en que dependen unos de
-# otros y regenera las bases procesadas, los modelos, los envíos a Kaggle y
-# todas las tablas y figuras de las presentaciones.
+# otros y regenera las bases procesadas, los modelos, los envíos a Kaggle,
+# todas las tablas y figuras, y los PDF de las dos presentaciones
+# (04_Slides/best_equipo_01.pdf y 04_Slides/compare_equipo_01.pdf).
 #
 # Uso: abrir Taller_3_BDML_Aragon_Cadena_Florez.Rproj y correr
 #        source("01_Scripts/main.R")
@@ -85,6 +86,30 @@ for (carpeta in c("02_Data/Processed", "02_Data/Raw/MapasBogota/capas",
   dir.create(file.path(raiz, carpeta), recursive = TRUE, showWarnings = FALSE)
 }
 
+# Compila una presentación de 04_Slides con pdflatex (dos pasadas, para que
+# queden bien los números de página). Requiere una distribución de LaTeX
+# (MiKTeX, TeX Live o TinyTeX) con beamer y tikz.
+compilar_presentacion <- function(nombre) {
+  pdflatex <- Sys.which("pdflatex")
+  if (pdflatex == "") {
+    warning("No se encontró pdflatex: instale LaTeX para compilar 04_Slides/", nombre, ".tex")
+    return(invisible(FALSE))
+  }
+  message("\n", strrep("=", 78), "\n", format(Sys.time(), "%H:%M"), "  04_Slides/", nombre,
+          ".tex\n", strrep("=", 78))
+  carpeta_previa <- setwd(file.path(raiz, "04_Slides"))
+  on.exit(setwd(carpeta_previa))
+  for (pasada in 1:2) {
+    estado <- system2(pdflatex, c("-interaction=nonstopmode", "-halt-on-error",
+                                  paste0(nombre, ".tex")), stdout = FALSE)
+  }
+  if (!identical(as.integer(estado), 0L)) {
+    stop("La presentación ", nombre, " no compiló. Revise 04_Slides/", nombre, ".log")
+  }
+  message("Presentación lista: 04_Slides/", nombre, ".pdf")
+  invisible(TRUE)
+}
+
 capas_necesarias <- file.path(raiz, "02_Data", "Raw", "MapasBogota", "capas",
                               c("01_valor_referencia.geojson", "44_localidades.geojson",
                                 "45_upz.geojson"))
@@ -146,6 +171,13 @@ correr("01_Scripts/03_Models/16_embeddings_red.R")    # envíos 29 y 30
 # ------------------------------------------------------------------------------
 correr("01_Scripts/04_Results/01_mapas.R")            # mapas de Bogotá
 correr("01_Scripts/04_Results/02_negocio.R")          # decisión de compra
+correr("01_Scripts/04_Results/03_figuras_presentaciones.R")  # figuras, tablas y cifras de las diapositivas
+
+# ------------------------------------------------------------------------------
+# 4. Presentaciones
+# ------------------------------------------------------------------------------
+compilar_presentacion("best_equipo_01")
+compilar_presentacion("compare_equipo_01")
 
 # ------------------------------------------------------------------------------
 # Resumen
