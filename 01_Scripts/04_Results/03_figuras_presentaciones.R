@@ -121,8 +121,18 @@ razon_chap <- train %>%
   mutate(razon = exp(pred_log) / obj_price) %>%
   pull(razon)
 semaforo <- read_csv(here("03_Output", "Tables", "negocio_semaforo_resumen.csv"), show_col_types = FALSE)
-mejor_margen <- read_csv(here("03_Output", "Tables", "negocio_mejor_margen.csv"), show_col_types = FALSE) %>%
-  filter(descuento == max(descuento))
+margenes_escenarios <- read_csv(here("03_Output", "Tables", "negocio_mejor_margen.csv"), show_col_types = FALSE)
+mejor_margen <- margenes_escenarios %>% filter(descuento == max(descuento))
+# Frase para las notas sobre los escenarios en los que el vendedor cede menos.
+nota_descuentos <- margenes_escenarios %>%
+  filter(descuento < max(descuento)) %>%
+  mutate(texto = if_else(
+    ganancia_por_100_ofertas > 0,
+    sprintf("si cede %s, el mejor margen es %s, pero solo gana %s millones por cada 100 ofertas y cierra el %s de los negocios",
+            pct(descuento), pct(margen), millones(ganancia_por_100_ofertas * 1e6, 0), pct(porc_negocios / 100)),
+    sprintf("si cede %s, ningún margen hasta 30\\%% es rentable", pct(descuento)))) %>%
+  pull(texto) %>%
+  paste(collapse = "; ")
 fun_semaforo <- function(color) semaforo$porc[str_detect(semaforo$semaforo, paste0("^", color))] / 100
 
 grupos_base <- tibble(variable = setdiff(names(train), no_predictores)) %>%
@@ -162,7 +172,8 @@ cifras <- c(
   mejormargen     = pct(mejor_margen$margen),
   gananciacien    = millones(mejor_margen$ganancia_por_100_ofertas * 1e6, 0),
   negociosmargen  = pct(mejor_margen$porc_negocios / 100),
-  descuentomax    = pct(mejor_margen$descuento)
+  descuentomax    = pct(mejor_margen$descuento),
+  notadescuentos  = nota_descuentos
 )
 
 # ------------------------------------------------------------------------------
@@ -314,7 +325,7 @@ g_puestos <- puestos %>%
   scale_y_reverse(breaks = 1:5, labels = paste0(1:5, "°")) +
   scale_x_discrete(expand = expansion(add = c(0.3, 1.3))) +
   scale_color_manual(values = colores_familia, guide = "none") +
-  labs(title = "La validación aleatoria escoge el modelo equivocado",
+  labs(title = "El Random Forest gana en la validación aleatoria; el XGBoost, en la espacial y en Kaggle",
        subtitle = "Puesto de cada familia (misma base, envíos 05 a 09) según cada validación y según Kaggle",
        x = NULL, y = "Puesto") +
   tema
@@ -399,6 +410,12 @@ correlaciones <- cv_kaggle %>%
                             if_else(esquema == "aleatoria", "aleatoria", "con localidades por fuera"),
                             millones(sesgo, 0), format(round(rho, 2), decimal.mark = ",")))
 write_csv(correlaciones, file.path(ruta_tablas, "pres_cv_vs_kaggle.csv"))
+fun_corr <- function(e, v) correlaciones[[v]][correlaciones$esquema == e]
+cifras <- c(cifras,
+            rhoaleatoria    = format(round(fun_corr("aleatoria", "rho"), 2), nsmall = 2, decimal.mark = ","),
+            rholocalidad    = format(round(fun_corr("localidad", "rho"), 2), nsmall = 2, decimal.mark = ","),
+            brechaaleatoria = millones(fun_corr("aleatoria", "sesgo"), 0),
+            brechalocalidad = millones(fun_corr("localidad", "sesgo"), 0))
 
 g_cv_kaggle <- cv_kaggle %>%
   left_join(correlaciones %>% select(esquema, etiqueta), by = "esquema") %>%
@@ -509,7 +526,7 @@ g_sesgo <- sesgo_deciles %>%
   scale_y_continuous(labels = label_percent()) +
   scale_color_manual(values = colores_esquema, name = NULL) +
   scale_fill_manual(values = colores_esquema, name = NULL) +
-  labs(title = "Comprime los precios extremos, pero según la predicción casi no tiene sesgo",
+  labs(title = "Comprime los precios extremos; según la predicción, sobreestima poco",
        subtitle = "Error porcentual del envío 29 (predicción / precio - 1): mediana y rango intercuartil por decil",
        x = "Decil (1 = más barato)", y = "Error porcentual (positivo = sobreestima)",
        caption = "Para comprar solo se conoce la predicción: el panel de la derecha es el que importa para ofertar.") +
@@ -521,9 +538,13 @@ guardar(g_sesgo, "pres_sesgo_deciles", ancho = 12, alto = 5.5)
 # por fuera, para el texto de la diapositiva.
 extremos <- sesgo_deciles %>%
   filter(esquema == "Localidades por fuera (espacial)", condiciona == "Según el precio observado")
+# Rango del error mediano por decil del precio predicho, en las dos validaciones.
+segun_prediccion <- sesgo_deciles %>% filter(condiciona == "Según el precio predicho")
 cifras <- c(cifras,
-            sesgobarato = pct(extremos$mediana[extremos$decil == 1]),
-            sesgocaro   = pct(-extremos$mediana[extremos$decil == 10]))
+            sesgobarato  = pct(extremos$mediana[extremos$decil == 1]),
+            sesgocaro    = pct(-extremos$mediana[extremos$decil == 10]),
+            sesgopredmin = pct(max(min(segun_prediccion$mediana), 0)),
+            sesgopredmax = pct(max(segun_prediccion$mediana)))
 
 # ------------------------------------------------------------------------------
 # 11. Cifras para las diapositivas, como macros de LaTeX

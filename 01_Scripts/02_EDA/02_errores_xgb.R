@@ -10,6 +10,9 @@
 #              (sobreestimación o subestimación) por localidad, estrato, tipo
 #              de inmueble y decil de precio.
 #           3. Importancia de las variables del XGBoost.
+#           Usa la base completa con la que se estimó el envío 09: deja por
+#           fuera las variables que se agregaron después (fun_vars_excluidas
+#           en 00_utils.R, versión "completa").
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 #           03_Output/Models/09_xgb_completa.rds
 # Salidas:  03_Output/Tables/eda_cobertura_test.csv, eda_errores_*.csv,
@@ -28,7 +31,7 @@ ruta_pred    <- here("03_Output", "Predictions")
 walk(c(ruta_tablas, ruta_figuras, ruta_pred), dir.create, showWarnings = FALSE,
      recursive = TRUE)
 
-datos <- fun_datos_modelo()
+datos <- fun_datos_modelo("completa")
 train <- datos$train
 test  <- datos$test
 

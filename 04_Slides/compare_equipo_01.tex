@@ -54,14 +54,15 @@
 
 \begin{frame}{Qué familia gana según cómo se valida}
   \centering
-  \includegraphics[width=0.88\textwidth]{pres_puestos_validacion.pdf}
+  \includegraphics[height=0.74\textheight]{pres_puestos_validacion.pdf}
+  \lectura{La validación espacial anticipa mejor a Kaggle: su correlación de rangos con el puntaje privado es \rholocalidad{} (aleatoria: \rhoaleatoria), y Kaggle queda en promedio \brechalocalidad{} millones por encima, frente a \brechaaleatoria{} con la aleatoria.}
   \note{Con la misma base, el Random Forest es el mejor en la validación aleatoria, pero el XGBoost gana en las validaciones espaciales y en Kaggle. El Random Forest memoriza bien a los vecinos, que en la validación aleatoria están en entrenamiento, pero extrapola mal a zonas nuevas. Las dos validaciones no identifican el mismo mejor modelo; la espacial acierta.}
 \end{frame}
 
 \begin{frame}
   \centering
-  \vspace*{-0.4em}\makebox[\textwidth]{\includegraphics[height=1.01\textheight]{mapa_07_mae_localidad_modelos.pdf}}
-  \note{Cada localidad muestra su MAE cuando su grupo de localidades se dejó por fuera del entrenamiento. El ensamble reduce el error en casi todas las localidades, incluidas las del norte, que son las más parecidas a Chapinero.}
+  \vspace*{-0.4em}\makebox[\textwidth]{\includegraphics[height=0.96\textheight]{mapa_07_mae_localidad_modelos.pdf}}
+  \note{Cada localidad muestra su MAE cuando su grupo de localidades se dejó por fuera del entrenamiento. El ensamble reduce el error en casi todas las localidades, incluidas las del norte, que son las más parecidas a Chapinero. La red 24 es la versión robusta de la red neuronal que se usó como candidata en los ensambles; no se subió a Kaggle, pero tiene predicciones fuera de muestra con localidades por fuera, que la red 17 no tiene.}
 \end{frame}
 
 \input{comunes/c08_pesos.tex}
