@@ -26,3 +26,23 @@ ehthumbs_vista.db
 04_Slides/*.out
 04_Slides/*.snm
 04_Slides/*.toc
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Archivos temporales y de sistema
+*.tmp
+*~
+~$*
+.Rapp.history
+desktop.ini
+
+# LaTeX / Beamer (otros auxiliares)
+04_Slides/*.fls
+04_Slides/*.fdb_latexmk
+04_Slides/*.synctex.gz
+04_Slides/*.vrb

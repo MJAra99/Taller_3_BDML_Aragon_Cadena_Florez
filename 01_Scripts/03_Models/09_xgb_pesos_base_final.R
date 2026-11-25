@@ -304,7 +304,7 @@ p_loc <- pesos_loc %>%
   slice_max(pct_peso, n = 10) %>%
   mutate(localidad = fct_reorder(localidad, pct_peso)) %>%
   pivot_longer(c(pct_anuncios, pct_peso), names_to = "medida", values_to = "pct") %>%
-  mutate(medida = recode(medida, pct_anuncios = "% de los anuncios de train",
+  mutate(medida = dplyr::recode(medida, pct_anuncios = "% de los anuncios de train",
                          pct_peso = "% del peso total")) %>%
   ggplot(aes(pct, localidad, fill = medida)) +
   geom_col(position = position_dodge(width = 0.75), width = 0.7) +
@@ -320,7 +320,7 @@ fun_guardar(p_loc, "pesos_por_localidad_base_final", ancho = 8, alto = 5)
 p_bal <- balance_pesos %>%
   mutate(etiqueta = fct_reorder(etiqueta, abs(sin_pesos))) %>%
   pivot_longer(c(sin_pesos, con_pesos), names_to = "momento", values_to = "dif") %>%
-  mutate(momento = recode(momento, sin_pesos = "Sin pesos", con_pesos = "Con pesos")) %>%
+  mutate(momento = dplyr::recode(momento, sin_pesos = "Sin pesos", con_pesos = "Con pesos")) %>%
   ggplot(aes(dif, etiqueta)) +
   annotate("rect", xmin = -0.25, xmax = 0.25, ymin = -Inf, ymax = Inf, fill = "#f0efec") +
   geom_vline(xintercept = 0, color = col_texto, linewidth = 0.3) +
@@ -418,7 +418,7 @@ print(tabla_afinacion %>% mutate(across(c(mae, mae_pond, mae_chap, sesgo_chap), 
 p_afin <- tabla_afinacion %>%
   mutate(config = paste0("max_depth = ", max_depth, ", min_child_weight = ", min_child_weight)) %>%
   pivot_longer(c(mae, mae_pond, mae_chap), names_to = "metrica", values_to = "valor") %>%
-  mutate(metrica = factor(recode(metrica,
+  mutate(metrica = factor(dplyr::recode(metrica,
                                  mae = "MAE sin ponderar",
                                  mae_pond = "MAE ponderado (composición de test)",
                                  mae_chap = "MAE en Chapinero (train, fuera de muestra)"),
