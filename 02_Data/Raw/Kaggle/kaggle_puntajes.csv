@@ -1,0 +1,26 @@
+envio,subido_por,kaggle_publico,kaggle_privado
+01_lm_base,Jonathan Cadena Silva,312966242.53,307716345.51
+02_enet_base,Jonathan Cadena Silva,313406395.35,308172199.33
+03_cart_base,Jonathan Cadena Silva,228115162.81,228579561.10
+04_rf_base,Jonathan Cadena Silva,216647342.30,216149204.41
+05_lm_completa,Jonathan Cadena Silva,216428479.61,211866938.33
+06_enet_completa,Jonathan Cadena Silva,219494164.03,213639957.88
+07_cart_completa,Jonathan Cadena Silva,236027854.87,233334307.62
+08_rf_completa,Jonathan Cadena Silva,201102011.45,199145378.28
+09_xgb_completa,Jonathan Cadena Silva,179011660.07,175225909.26
+10_xgb_na_nativo,Mauricio Aragon,180677571.30,176547276.39
+11_xgb_pesos,Mauricio Aragon,176769052.82,177803273.57
+12_xgb_base_final,Jonathan Cadena Silva,173974959.22,172102351.35
+13_xgb_na_nativo_base_final,Jonathan Cadena Silva,174569022.32,174422562.00
+14_xgb_pesos_base_final,Jonathan Cadena Silva,171330123.38,171717626.15
+15_xgb_na_nativo_texto,Jonathan Cadena Silva,157586646.26,158648804.70
+16_xgb_pesos_texto,Jonathan Cadena Silva,156910032.24,159473768.04
+17_nnet_texto,Jonathan Cadena Silva,194563311.88,193617731.18
+18_xgb_pesos_texto_sesgo_ponderado,Jonathan Cadena Silva,153054181.03,155636020.20
+19_xgb_pesos_texto_sesgo_chapinero,Jonathan Cadena Silva,153234519.00,155484305.29
+20_xgb_mejorado,Mauricio Aragon,154181239.98,156021699.26
+21_xgb_mejorado_sesgo,Mauricio Aragon,153374121.56,154806123.48
+27_ensamble_calibrado_reanuncios,Esteban Flórez,150454300.66,152518447.89
+28_ensamble_v2_nivel,Esteban Flórez,149673828.89,151988330.63
+29_ensamble_embeddings,Mauricio Aragon,149373386.02,151459023.72
+30_nnet_embeddings,Mauricio Aragon,200799279.43,201408302.13

@@ -11,7 +11,7 @@ El repositorio:
 
 1. construye una base con variables de la vivienda, del texto del anuncio y del entorno (capas de Mapas Bogotá, elevación y el precio de los vecinos);
 2. estima seis familias de modelos (regresión lineal, Elastic Net, CART, Random Forest, XGBoost y redes neuronales), validadas con validación cruzada estándar y espacial;
-3. genera los 30 envíos a la competencia de Kaggle [uniandes-bdml-202620-ps-3](https://www.kaggle.com/competitions/uniandes-bdml-202620-ps-3), que se evalúa con el error absoluto medio (MAE, Mean Absolute Error) en pesos;
+3. genera los envíos a la competencia de Kaggle [uniandes-bdml-202620-ps-3](https://www.kaggle.com/competitions/uniandes-bdml-202620-ps-3), que se evalúa con el error absoluto medio (MAE, Mean Absolute Error) en pesos. Los scripts generan 30 archivos de envío; a Kaggle se subieron 25 (del 01 al 21 y del 27 al 30). Los archivos 22 a 26 son modelos intermedios que se combinan en los ensambles;
 4. traduce las predicciones en una regla de compra para la empresa, considerando que sobreestimar el precio es más costoso que subestimarlo.
 
 El mejor envío es el **29_ensamble_embeddings**: MAE de 151,5 millones de pesos en el puntaje privado de Kaggle.
@@ -44,7 +44,7 @@ El mejor envío es el **29_ensamble_embeddings**: MAE de 151,5 millones de pesos
 
 ### Nota sobre la reproducibilidad
 
-Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se estimaron con versiones intermedias de la base, antes de agregar el precio de los vecinos, el Catastro por manzana y el texto como datos. `main.R` reconstruye siempre la base final, así que al correrlo desde cero esos modelos se estiman con la base final, y su MAE de validación cruzada puede diferir un poco del registrado en las presentaciones. Los puntajes que obtuvo cada envío en Kaggle están en `03_Output/Tables/kaggle_puntajes.csv`. Los envíos del 12 en adelante usan la base final, y se reproducen igual.
+Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se estimaron con versiones intermedias de la base, antes de agregar el precio de los vecinos, el Catastro por manzana y el texto como datos. `main.R` reconstruye siempre la base final, así que al correrlo desde cero esos modelos se estiman con la base final, y su MAE de validación cruzada puede diferir un poco del registrado en las presentaciones. Los puntajes público y privado que obtuvo cada envío en Kaggle están en `02_Data/Raw/Kaggle/kaggle_puntajes.csv`, copiados de la página de envíos de la competencia; es un insumo, porque ningún script lo genera. Los envíos del 12 en adelante usan la base final, y se reproducen igual.
 
 ## Estructura del repositorio
 
@@ -62,7 +62,7 @@ Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se es
 │   └── 04_Results               Mapas y análisis de negocio para las presentaciones
 ├── 02_Data
 │   ├── Raw
-│   │   ├── Kaggle               train.csv, test.csv y plantilla de envío
+│   │   ├── Kaggle               train.csv, test.csv, plantilla de envío y puntajes de los envíos
 │   │   └── MapasBogota          Inventario, selección y capas descargadas
 │   └── Processed                Bases intermedias y finales (.rds) y embeddings
 ├── 03_Output
@@ -70,7 +70,7 @@ Los modelos se estimaron a medida que la base crecía. Los envíos 05 a 11 se es
 │   ├── Tables                   Tablas en CSV y TeX
 │   ├── Models                   Modelos estimados (.rds) y resultados_modelos.csv
 │   ├── Predictions              Predicciones fuera de muestra de la validación cruzada
-│   └── Submissions              Los 30 envíos a Kaggle
+│   └── Submissions              Los archivos de envío a Kaggle
 └── 04_Slides                    Presentaciones
 ```
 
@@ -117,7 +117,7 @@ Cada modelo guarda su envío en `03_Output/Submissions/<envío>.csv`, el modelo 
 | `03_Models/10_xgb_pesos_texto.R` | XGBoost con pesos y texto como datos | 15_xgb_na_nativo_texto, 16_xgb_pesos_texto; `*_texto` |
 | `03_Models/11_nnet_texto.R` | Red neuronal de una capa oculta | 17_nnet_texto |
 | `03_Models/12_ajuste_sesgo.R` | Corrige la subestimación del 16 con un factor | 18_xgb_pesos_texto_sesgo_ponderado, 19_xgb_pesos_texto_sesgo_chapinero; `ajuste_sesgo_factores` |
-| `02_EDA/03_diagnostico_errores.R` | Diagnóstico de errores del 16 por segmento y su traslado a test | `diag_*`, `kaggle_puntajes.csv`, `Predictions/oof_16_*` |
+| `02_EDA/03_diagnostico_errores.R` | Diagnóstico de errores del 16 por segmento y su traslado a test | `diag_*`, `Predictions/oof_16_*` |
 | `03_Models/13_xgb_mejorado.R` | XGBoost con precisión de coordenadas, barrios en el texto y otras mejoras | 20_xgb_mejorado, 21_xgb_mejorado_sesgo; `xgb_mejorado_*` |
 | `03_Models/14_ensamble_reanuncios.R` | Modelos del precio por m2, red robusta, ensamble, calibración y anuncios repetidos | 22_xgb_precio_m2 a 27_ensamble_calibrado_reanuncios; `ensamble_*` |
 | `03_Models/15_ensamble_v2.R` | Ensamble con varias semillas y ajuste de nivel | 28_ensamble_v2_nivel; `ensamble_v2_*` |
@@ -138,7 +138,7 @@ Todas quedan en `03_Output/Figures` (PDF y PNG) y `03_Output/Tables` (CSV y TeX)
 |---|---|
 | `eda_balance_*`, `eda_caracteristicas_*`, `eda_correlaciones_*`, `eda_entorno_*`, `eda_mapa_*`, `eda_menciones_*`, `eda_precio_*`, `eda_soporte_*`, `eda_tabla_*` | `02_EDA/01_chapinero_vs_bogota.R` |
 | `eda_cobertura_*`, `eda_errores_*`, `eda_error_decil_*`, `eda_importancia_xgb`, `eda_observado_predicho` | `02_EDA/02_errores_xgb.R` |
-| `diag_*`, `kaggle_puntajes` | `02_EDA/03_diagnostico_errores.R` |
+| `diag_*` | `02_EDA/03_diagnostico_errores.R` |
 | `texto_*` | `01_Data/06_texto_como_datos.R` |
 | `pesos_*`, `xgb_pesos_*` (sin sufijo, `_base_final`, `_texto`) | `03_Models/07`, `09` y `10` |
 | `ajuste_sesgo_*` | `03_Models/12_ajuste_sesgo.R` |

@@ -36,8 +36,9 @@
 #           03_Output/Models/16_xgb_pesos_texto.rds
 #           03_Output/Models/resultados_modelos.csv
 #           03_Output/Tables/xgb_pesos_comparacion_{base_final,texto}.csv
+#           02_Data/Raw/Kaggle/kaggle_puntajes.csv (puntajes de Kaggle)
 # Salidas:  03_Output/Predictions/oof_16_{aleatoria,localidad}.rds
-#           03_Output/Tables/kaggle_puntajes.csv, diag_*.csv
+#           03_Output/Tables/diag_*.csv
 #           03_Output/Figures/diag_*.{pdf,png}
 # ==============================================================================
 
@@ -215,22 +216,11 @@ oof <- map_dfr(c(aleatoria = "aleatoria", localidad = "localidad"), function(esq
 
 # ------------------------------------------------------------------------------
 # 3. ¿Qué validación sigue a Kaggle?
-# Puntajes públicos de Kaggle (actualizar este cuadro con cada envío nuevo).
+# Puntajes público y privado de cada envío, copiados de la página de envíos
+# de la competencia (02_Data/Raw/Kaggle/kaggle_puntajes.csv).
 # ------------------------------------------------------------------------------
-kaggle <- tribble(
-  ~envio,                                ~kaggle_publico,
-  "10_xgb_na_nativo",                    180677571.30,
-  "11_xgb_pesos",                        176769052.82,
-  "12_xgb_base_final",                   173974959.22,
-  "13_xgb_na_nativo_base_final",         174569022.32,
-  "14_xgb_pesos_base_final",             171330123.38,
-  "15_xgb_na_nativo_texto",              157586646.26,
-  "16_xgb_pesos_texto",                  156910032.24,
-  "17_nnet_texto",                       194563311.88,
-  "18_xgb_pesos_texto_sesgo_ponderado",  153054181.03,
-  "19_xgb_pesos_texto_sesgo_chapinero",  153234519.00
-)
-write_csv(kaggle, file.path(ruta_tab, "kaggle_puntajes.csv"))
+kaggle <- read_csv(here("02_Data", "Raw", "Kaggle", "kaggle_puntajes.csv"),
+                   show_col_types = FALSE)
 
 # MAE de los pares con y sin pesos (13 vs 14 y 15 vs 16) con las tres métricas
 # de cada esquema, frente a Kaggle. Si un esquema ordena bien los pares, sirve
