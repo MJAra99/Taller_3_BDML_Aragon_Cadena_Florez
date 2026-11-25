@@ -117,7 +117,7 @@ off_train <- log(pmin(pmax(datos$train$num_area, lim_area[1]), lim_area[2]))
 off_test  <- log(pmin(pmax(datos$test$num_area,  lim_area[1]), lim_area[2]))
 
 # Métricas en pesos de un vector de predicciones (en log), siempre recortadas
-# al rango de train como en los envíos.
+# al rango de entrenamiento como en los envíos.
 fun_metricas <- function(pred_log) {
   ok  <- !is.na(pred_log)
   err <- recortar(exp(pred_log)) - precio
@@ -128,11 +128,9 @@ fun_metricas <- function(pred_log) {
          pct_sobre_chap = 100 * mean(err[ok & es_chap] > 0))
 }
 
-# ------------------------------------------------------------------------------
-# 2. Modelo 16 del equipo: predicciones fuera de muestra y de test
-# ------------------------------------------------------------------------------
+##### 2. Modelo 16 del equipo: predicciones fuera de muestra y de test #####
 # No se re-entrena: se leen las predicciones fuera de muestra que guardó
-# 03_diagnostico_errores.R (mismos folds, porque fun_folds_cv fija la semilla).
+# 03_diagnostico_errores.R 
 fun_leer_oof_equipo <- function(modelo, esquema) {
   ruta <- file.path(ruta_pred, paste0("oof_", modelo, "_", esquema, ".rds"))
   if (!file.exists(ruta)) return(NULL)
@@ -148,9 +146,9 @@ if (any(map_lgl(oof16, is.null))) {
 }
 res_16 <- list(nombre = "16_xgb_pesos_texto", oof = oof16, pred_test = modelo_16$pred_test)
 
-# ------------------------------------------------------------------------------
-# 3. Palabras del anuncio como columnas (para el modelo 23)
-# ------------------------------------------------------------------------------
+
+##### 3. Palabras del anuncio como columnas (para el modelo 23) #####
+
 # El equipo resumió las palabras en UNA variable (la predicción del Lasso) y
 # en 15 tópicos. Eso captura el efecto PROMEDIO de cada palabra. Con las
 # palabras como columnas, el árbol puede encontrar interacciones: por ejemplo,
@@ -160,10 +158,7 @@ res_16 <- list(nombre = "16_xgb_pesos_texto", oof = oof16, pred_test = modelo_16
 # sin palabras vacías, raíces de Snowball, palabras y bigramas), pero con un
 # vocabulario más corto (términos en al menos 2% de los anuncios) para que la
 # matriz quepa en memoria como matriz densa.
-# ¿Por qué densa y no dispersa? XGBoost trata las celdas vacías de una matriz
-# dispersa como FALTANTES, no como ceros. Al mezclar las variables numéricas
-# (que tienen ceros de verdad y NA de verdad) con las palabras en una matriz
-# dispersa, se confundirían ceros y faltantes.
+
 fun_dtm <- function(min_prop = 0.02) {
   textos <- readRDS(here("02_Data", "Processed", "base_limpia.rds")) %>%
     distinct(property_id, .keep_all = TRUE) %>%
@@ -194,12 +189,10 @@ fun_dtm <- function(min_prop = 0.02) {
   list(train = m[seq_len(n_train), , drop = FALSE], test = m[-seq_len(n_train), , drop = FALSE])
 }
 
-# ------------------------------------------------------------------------------
-# 4. XGBoost del precio por m2 (con y sin palabras)
-# ------------------------------------------------------------------------------
+##### 4. XGBoost del precio por m2 (con y sin palabras) #####
 # Parámetros del 16 (profundidad 6, min_child_weight 1, eta 0,05, submuestreo
 # 0,8), con sus mismos pesos y faltantes nativos. Lo único que cambia es la
-# variable objetivo (y, en el 23, las columnas).
+# variable objetivo
 parametros_16 <- list(objective = "reg:squarederror", eval_metric = "mae",
                       eta = hp16$eta, subsample = 0.8, colsample_bytree = 0.7,
                       max_depth = hp16$max_depth, min_child_weight = hp16$min_child_weight,
@@ -211,8 +204,7 @@ fun_mejor_ronda <- function(modelo) {
   as.integer(ronda)
 }
 
-# CV con offset. Con rondas = NULL usa parada temprana con el MAE ponderado
-# por w en el fold de validación (el criterio de 13_xgb_mejorado.R).
+# CV con offset
 fun_cv_xgb_m2 <- function(x, folds, parametros, rondas = NULL, max_rondas = 3000) {
   pred <- rep(NA_real_, n_train)
   rondas_fold <- integer(length(folds))
@@ -237,7 +229,7 @@ fun_cv_xgb_m2 <- function(x, folds, parametros, rondas = NULL, max_rondas = 3000
 }
 
 # Corre un modelo completo: CV aleatoria (escoge rondas), CV por localidades
-# (rondas fijas), ajuste final, envío y registro. Guarda todo en caché.
+# (rondas fijas), ajuste final, envío y registro. 
 fun_modelo_m2 <- function(envio, x_tr, x_te, parametros, descripcion) {
   ruta_cache <- file.path(ruta_mod, paste0(envio, ".rds"))
   if (file.exists(ruta_cache)) {
@@ -282,19 +274,11 @@ fun_cerrar_modelo <- function(res, familia, descripcion) {
 
 # 4.1 (22) Precio por m2.
 # Hedónicamente, precio = (precio por m2) x área. El precio por m2 depende de
-# la ubicación y la calidad; el área ya la conocemos. Con el objetivo en
-# log(precio) - log(área), el árbol no gasta particiones en aprender que lo
-# grande vale más: eso entra exacto (es una elasticidad de 1 del precio al
-# área, que el modelo puede corregir porque log(área) sigue siendo predictor).
-# Por sí solo rinde parecido al 16; su valor es que se equivoca DISTINTO
-# (piensa en "cuánto vale el m2 aquí"), lo que lo hace útil en el ensamble.
+# la ubicación y la calidad; el área ya la conocemos.
 res_22 <- fun_modelo_m2("22_xgb_precio_m2", x_na$train, x_na$test, parametros_16,
                         "XGBoost (config. del 16) sobre log(precio/m2), offset log(área), pesos w^0,5.")
 
 # 4.2 (23) Precio por m2 + palabras como columnas.
-# colsample_bytree baja a 0,5: con cientos de columnas de palabras, cada árbol
-# ve una muestra más chica de columnas, lo que lo diversifica y evita que unas
-# pocas palabras dominen.
 pal <- fun_dtm(min_prop = 0.02)
 res_23 <- fun_modelo_m2("23_xgb_palabras_m2", cbind(x_na$train, pal$train),
                         cbind(x_na$test, pal$test),
@@ -302,24 +286,8 @@ res_23 <- fun_modelo_m2("23_xgb_palabras_m2", cbind(x_na$train, pal$train),
                         "XGBoost log(precio/m2) con las palabras del anuncio como columnas.")
 rm(pal); invisible(gc())
 
-# ------------------------------------------------------------------------------
-# 5. (24) Red neuronal robusta
-# ------------------------------------------------------------------------------
-# El 17_nnet_texto tuvo MAE de 348 M en localidades y de más de 40.000 M en
-# bloques: algunas predicciones "explotan". La causa: la red se estandariza
-# con media y desviación, pero en una zona NO vista algunas variables toman
-# valores muy por fuera del rango de entrenamiento (10 o 20 desviaciones); la
-# red, que es una función no acotada de sus entradas, extrapola sin control.
-# Los árboles no tienen ese problema porque su predicción siempre es el
-# promedio de alguna hoja.
-# Corrección: transformar cada variable continua a su CUANTIL en train y
-# luego a la normal estándar (qnorm). Así toda entrada queda entre -3,1 y
-# +3,1, también en test: un valor más alto que todos los de train recibe el
-# cuantil 99,9%, no "20 desviaciones". Es la misma idea de
-# QuantileTransformer en scikit-learn. Las dummies solo se centran y escalan.
-# Además: objetivo por m2 con offset (como el 22), una capa oculta de 8
-# neuronas, penalización L2 (decay) de 0,5 y salida lineal.
-# En la réplica, la CV por localidades pasó de 348 M (el 17) a ~150 M.
+
+##### 5. (24) Red neuronal robusta #####
 fun_cuantil_normal <- function(a_mat, b_mat) {
   for (j in seq_len(ncol(a_mat))) {
     a <- a_mat[, j]
@@ -370,7 +338,7 @@ if (correr_red) {
   }
 }
 
-# Opcional: el 20_xgb_mejorado del equipo, si ya se corrió.
+# el 20_xgb_mejorado del equipo
 res_20 <- NULL
 if (incluir_20 && file.exists(file.path(ruta_mod, "20_xgb_mejorado.rds"))) {
   oof20 <- list(aleatoria = fun_leer_oof_equipo("20", "aleatoria"),
@@ -382,9 +350,8 @@ if (incluir_20 && file.exists(file.path(ruta_mod, "20_xgb_mejorado.rds"))) {
   }
 }
 
-# ==============================================================================
-# 6. (25) ENSAMBLE
-# ==============================================================================
+##### 6. (25) ENSAMBLE #####
+
 # Si dos modelos tienen errores e1 y e2 con la misma varianza s2 y correlación
 # rho, el promedio tiene varianza s2 (1 + rho) / 2: mientras rho < 1, promediar
 # reduce el error. Es la lógica de bagging, pero entre modelos distintos.
@@ -407,8 +374,7 @@ test_mat <- sapply(miembros, function(r) recortar(exp(r$pred_test)))
 fold_ale <- integer(n_train)
 for (i in seq_along(f_ale)) fold_ale[f_ale[[i]]$val] <- i
 
-# Pesos convexos vía softmax: w_j = exp(t_j) / sum(exp(t)). Así optim() busca
-# t sin restricciones y los pesos siempre son >= 0 y suman 1.
+# Pesos vía softmax: w_j = exp(t_j) / sum(exp(t)). 
 fun_pesos <- function(P, obs, pond) {
   objetivo <- function(t) {
     a <- exp(t) / sum(exp(t))
@@ -439,16 +405,12 @@ fun_cerrar_modelo(res_25, "Ensamble",
                   paste("Promedio ponderado (pesos fuera de muestra):",
                         paste(names(pesos_ens), round(pesos_ens, 2), sep = " = ", collapse = ", ")))
 
-# ==============================================================================
-# 7. (26) CALIBRACIÓN ESTIRADA
-# ==============================================================================
+
+##### 7. (26) CALIBRACIÓN ESTIRADA #####
+
 # El diagnóstico del equipo (diag_sesgo_deciles.csv) muestra regresión a la
 # media: el modelo sobreestima los inmuebles baratos y subestima los caros.
-# Es lo esperable: los árboles predicen promedios de hojas y la
-# regularización encoge todo hacia el centro. Como test (Chapinero) es caro,
-# ese encogimiento se vuelve un sesgo negativo.
-# Los envíos 18 y 19 corrigen solo el nivel: precio x factor (en log,
-# sumar una constante a). Aquí se corrige nivel Y pendiente, en log:
+# Aquí se corrige nivel Y pendiente, en log:
 #     p_cal = a + m + b (p - m),
 # donde m es la media de las predicciones fuera de muestra. Con b > 1 las
 # predicciones se "estiran" alejándose de m: los caros suben, los baratos
@@ -480,21 +442,16 @@ fun_cerrar_modelo(res_26, "Ensamble",
                   paste0("Ensamble 25 con calibración log: a = ", round(cal$a, 3),
                          ", b = ", round(cal$b, 3), " (estira la regresión a la media)."))
 
-# ==============================================================================
-# 8. (27) RE-ANUNCIOS
-# ==============================================================================
+##### 8. (27) RE-ANUNCIOS #####
+
 # Un mismo apartamento suele publicarse varias veces (otra inmobiliaria, otra
-# fecha). En train, entre anuncios distintos (sin contar los duplicados
+# fecha, etc). En entrenamiento, entre anuncios distintos (sin contar los duplicados
 # exactos que 05_merge.R ya quitó) con la MISMA descripción, las mismas
 # habitaciones, los mismos baños y el mismo tipo, el precio es idéntico en
-# ~77% de los casos y el MAE de usar el precio del otro anuncio es ~12-14 M.
+# casi 77% de los casos y el MAE de usar el precio del otro anuncio es ~12-14 M.
 # El mejor modelo tiene, en esos mismos anuncios, un MAE de ~95 M. Para esos casos, el precio
 # observado es mucho mejor predictor que cualquier modelo.
-# Diferencia con el "comparable exacto" de 13_xgb_mejorado.R: ese usa
-# anuncios con las mismas coordenadas pero con OTRA descripción (vecinos en el
-# mismo edificio); aquí es la MISMA descripción (el mismo anuncio publicado
-# otra vez), sin exigir las mismas coordenadas (los re-anuncios suelen tener
-# coordenadas distintas porque cada portal geocodifica a su manera).
+
 # Reglas: descripción de al menos 40 caracteres (las cortas son genéricas,
 # p. ej. "apartamento en venta"), y distancia entre los dos anuncios de hasta
 # 3 km (una descripción idéntica a 10 km es más probablemente un texto modelo
@@ -533,7 +490,7 @@ fun_reanuncio <- function(consulta, dist_max = 3000) {
     summarise(precio_reanuncio = median(precio_ref), n_reanuncios = n(), .groups = "drop")
 }
 
-# 8.1 Evidencia en train: ¿qué tan bueno es el re-anuncio frente al modelo?
+# 8.1 Evidencia en entrenamiento: ¿qué tan bueno es el re-anuncio frente al modelo?
 ev <- fun_reanuncio(ll_train) %>%
   left_join(tibble(property_id = datos$train$property_id, obs = precio,
                    modelo = recortar(exp(res_26$oof$aleatoria))), by = "property_id")
@@ -547,17 +504,13 @@ message("Re-anuncios en train: ", nrow(ev), " | MAE modelo ",
         round(mean(abs(ev$modelo - ev$obs)) / 1e6, 1), " M; MAE re-anuncio ",
         round(mean(abs(ev$precio_reanuncio - ev$obs)) / 1e6, 1), " M; lambda = ", lambda)
 
-# 8.2 Aplicación a test.
+# 8.2 Aplicación a prueba
 re_test <- fun_reanuncio(ll_test)
 message("Inmuebles de test con re-anuncio en train: ", nrow(re_test))
 
-# OJO al leer la CV del 27: en train ~1 de cada 4 anuncios tiene un
-# re-anuncio (por eso su MAE de CV cae tanto), pero en test solo ~1,3%. La
-# ganancia esperada en Kaggle es mucho menor: aproximadamente
-#   (inmuebles de test con re-anuncio / total de test) x
-#   (MAE del modelo en re-anuncios - MAE del re-anuncio).
-# Como el modelo se equivoca más en Chapinero que en train, esta cuenta con
-# el MAE de train es más bien conservadora.
+
+# Como el modelo se equivoca más en Chapinero que en entrenamienot, esta cuenta con
+# el MAE de entrenamiento la tomamos como conservadora.
 ganancia_esperada <- nrow(re_test) / nrow(datos$test) *
   (mean(abs(ev$modelo - ev$obs)) - min(tabla_lambda$mae))
 message("Ganancia esperada en el MAE de test por los re-anuncios: ~",
@@ -585,9 +538,8 @@ fun_cerrar_modelo(res_27, "Ensamble",
                   paste0("Ensamble calibrado 26 + precio de re-anuncios de train (", nrow(re_test),
                          " inmuebles de test, lambda = ", lambda, ")."))
 
-# ==============================================================================
-# 9. COMPARACIÓN
-# ==============================================================================
+##### 9. COMPARACIÓN #####
+
 todos <- compact(list(res_16, res_20, res_22, res_23, res_24, res_25, res_26, res_27))
 comparacion <- map_dfr(todos, function(r) {
   bind_cols(tibble(modelo = r$nombre),
@@ -622,19 +574,3 @@ ggsave(file.path(ruta_fig, "ensamble_comparacion.png"), p_comp,
        width = 10, height = 4.8, dpi = 300, bg = "white")
 ggsave(file.path(ruta_fig, "ensamble_comparacion.pdf"), p_comp, width = 10, height = 4.8)
 
-# ------------------------------------------------------------------------------
-# QUÉ SUBIR A KAGGLE Y CÓMO LEERLO
-# ------------------------------------------------------------------------------
-# Orden sugerido: 27 (todo junto), 25 (solo ensamble), 26 (ensamble +
-# calibración). Así cada paso se mide por separado: 25 vs 16 mide el ensamble,
-# 26 vs 25 la calibración y 27 vs 26 los re-anuncios. 22, 23 y 24 solos no
-# deberían ganarle al 16 (no es su función), solo vale la pena subirlos si
-# sobran envíos.
-# * Sobre el factor de los envíos 18/19: el 26 ya corrige el nivel (a). No
-#   combinarlo además con el factor 1,054 de diag_factor_optimo.csv sin
-#   probar, porque se corregiría dos veces.
-# * dif_vs_16_pond < 0: el modelo mejora al 16 con el criterio que mejor
-#   ha anticipado a Kaggle. EXCEPCIÓN: el 27, cuya CV exagera la ganancia
-#   porque en train hay muchos más re-anuncios que en test (ver 8.2); para él
-#   la cifra relevante es la "ganancia esperada" que imprime la sección 8.
-# ==============================================================================
