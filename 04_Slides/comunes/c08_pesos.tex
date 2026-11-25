@@ -1,11 +1,12 @@
 % C8. Pesos por parecido con test
-\begin{frame}{Le enseñamos al modelo a mirar lo que se parece a Chapinero}
+\begin{frame}
   \begin{columns}[c]
-    \begin{column}{0.5\textwidth}\centering
-      \includegraphics[height=0.82\textheight]{mapa_08_pesos_upz.pdf}
+    \begin{column}{0.6\textwidth}\centering
+      \mapavertical{mapa_08_pesos_upz.pdf}
     \end{column}
-    \begin{column}{0.45\textwidth}
-      \begin{itemize}
+    \begin{column}{0.38\textwidth}
+      \titulolateral{Le enseñamos al modelo a mirar lo que se parece a Chapinero}
+      \begin{itemize}\footnotesize
         \item Un modelo aprende a distinguir los anuncios de train de los de test.
         \item Los anuncios de train que ``parecen de test'' reciben más peso al entrenar.
         \item Así el modelo dedica más esfuerzo a acertar en viviendas como las de Chapinero.

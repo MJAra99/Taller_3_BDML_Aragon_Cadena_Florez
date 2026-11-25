@@ -1,7 +1,7 @@
 % ==============================================================================
 % best_equipo_01.tex
 % Presentación "Best Model Deep Dive": la historia del mejor modelo, desde los
-% datos hasta la decisión de compra. Las diapositivas c01 a c10 de comunes/
+% datos hasta la decisión de compra. Las diapositivas c01 a c13 de comunes/
 % también están en compare_equipo_01.tex.
 % Compilar desde esta carpeta: pdflatex best_equipo_01.tex (dos veces).
 % ==============================================================================
@@ -30,13 +30,14 @@
 \input{comunes/c08_pesos.tex}
 
 % --- Qué tan bien predice en Chapinero ----------------------------------------
-\begin{frame}{El modelo distingue zonas dentro de Chapinero}
+\begin{frame}
   \begin{columns}[c]
-    \begin{column}{0.5\textwidth}\centering
-      \includegraphics[height=0.84\textheight]{mapa_03_chapinero_prediccion_test.pdf}
+    \begin{column}{0.6\textwidth}\centering
+      \mapavertical{mapa_03_chapinero_prediccion_test.pdf}
     \end{column}
-    \begin{column}{0.45\textwidth}
-      \begin{itemize}
+    \begin{column}{0.38\textwidth}
+      \titulolateral{El modelo distingue zonas dentro de Chapinero}
+      \begin{itemize}\footnotesize
         \item Precios por m$^2$ más altos en el norte (Chicó Lago) y en El Refugio.
         \item Más bajos en Chapinero central y hacia el sur.
         \item El modelo no le pone a toda la localidad el mismo precio: usa la cuadra, los vecinos y el anuncio.
@@ -46,26 +47,37 @@
   \note{Cada punto es un anuncio de test, con el precio por metro cuadrado que predice el envío 29. No es el precio observado, porque test no tiene precio. Se muestran solo los anuncios con área observada.}
 \end{frame}
 
-\begin{frame}{Dónde se equivoca: subestima las viviendas caras}
+\begin{frame}
   \begin{columns}[c]
-    \begin{column}{0.42\textwidth}\centering
-      \includegraphics[height=0.84\textheight]{mapa_04_chapinero_error_oof.pdf}
+    \begin{column}{0.6\textwidth}\centering
+      \mapavertical{mapa_04_chapinero_error_oof.pdf}
     \end{column}
-    \begin{column}{0.56\textwidth}\centering
-      \includegraphics[width=\textwidth]{diag_sesgo_deciles.pdf}
-      \lectura{En Chapinero el modelo sobreestima el \sobreestimachap{} de las viviendas, y en más de 10\% el \sobrediezchap. Lo caro queda por debajo y lo barato por encima.}
+    \begin{column}{0.38\textwidth}
+      \titulolateral{Dónde se equivoca el modelo en Chapinero}
+      \begin{itemize}\footnotesize
+        \item Rojo: el modelo sobreestima el precio; azul: lo subestima.
+        \item En Chapinero sobreestima el \sobreestimachap{} de las viviendas, y en más de 10\% el \sobrediezchap.
+      \end{itemize}
     \end{column}
   \end{columns}
-  \note{Estos errores son de anuncios de train predichos sin ver su localidad: es la mejor aproximación al error en test, porque en test no conocemos el precio. Rojo es sobreestimar, azul subestimar. El patrón por decil es típico de modelos que predicen la media: comprimen los extremos.}
+  \note{Estos errores son de anuncios de train predichos sin ver su localidad: es la mejor aproximación al error en test, porque en test no conocemos el precio. El error no se concentra en una sola zona: hay rojos y azules mezclados en toda la localidad.}
 \end{frame}
 
-\begin{frame}{Dónde el modelo tiene poca información para predecir}
+\begin{frame}{Subestima las viviendas caras y sobreestima las baratas}
+  \centering
+  \includegraphics[height=0.78\textheight]{diag_sesgo_deciles.pdf}
+  \lectura{Aleatoria: validación cruzada estándar, con los anuncios repartidos al azar. Localidades: validación cruzada espacial, con una localidad completa por fuera. Con las dos, lo caro queda por debajo y lo barato por encima.}
+  \note{El patrón por decil es típico de modelos que predicen la media: comprimen los extremos. Para la empresa, lo grave es la parte baja: en las viviendas baratas el modelo sobreestima, y ahí es donde pagaría de más.}
+\end{frame}
+
+\begin{frame}
   \begin{columns}[c]
-    \begin{column}{0.5\textwidth}\centering
-      \includegraphics[height=0.84\textheight]{mapa_05_chapinero_cobertura.pdf}
+    \begin{column}{0.6\textwidth}\centering
+      \mapavertical{mapa_05_chapinero_cobertura.pdf}
     \end{column}
-    \begin{column}{0.45\textwidth}
-      \begin{itemize}
+    \begin{column}{0.38\textwidth}
+      \titulolateral{Dónde el modelo tiene poca información para predecir}
+      \begin{itemize}\scriptsize
         \item Azul: muchos anuncios de train cerca; el modelo tiene con qué comparar.
         \item Rojo: casi ninguno; el modelo extrapola desde otras zonas.
         \item La incertidumbre no es igual en toda la localidad: hay que tenerla en cuenta al ofertar.
@@ -77,46 +89,9 @@
 
 % --- Del modelo al negocio ----------------------------------------------------
 \input{comunes/c09_kaggle_negocio.tex}
-
-\begin{frame}{Dónde pagaríamos de más si compráramos al precio predicho}
-  \begin{columns}[c]
-    \begin{column}{0.5\textwidth}\centering
-      \includegraphics[height=0.84\textheight]{negocio_01_riesgo_sobreestimacion_upz.pdf}
-    \end{column}
-    \begin{column}{0.45\textwidth}
-      \begin{itemize}
-        \item En Chapinero, el \sobrediezchap{} de las viviendas se sobreestima en más de 10\%.
-        \item Pagar el precio predicho en esos casos es perder capital.
-        \item El riesgo cambia por zona: no sirve un solo margen para toda la ciudad.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-  \note{Este es el error que le importa a la empresa: el de sobreestimar. El mapa muestra, por UPZ, el porcentaje de anuncios cuya predicción supera el precio en más de 10\%.}
-\end{frame}
-
-\begin{frame}{Cuánto ofertar por debajo de la predicción en cada zona}
-  \begin{columns}[c]
-    \begin{column}{0.5\textwidth}\centering
-      \includegraphics[height=0.84\textheight]{negocio_02_margen_seguridad_upz.pdf}
-    \end{column}
-    \begin{column}{0.45\textwidth}
-      \begin{itemize}
-        \item Margen de seguridad: cuánto ofertar por debajo de la predicción para que solo 1 de cada 10 compras pague de más.
-        \item En Chapinero: \textbf{\margenchap}.
-        \item Donde el modelo se equivoca más, el margen tiene que ser mayor.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-  \note{Si q90 es el percentil 90 de la razón entre predicción y precio, el margen es 1 menos 1 sobre q90. Es una regla simple que traduce el error del modelo en una decisión de oferta.}
-\end{frame}
-
-\begin{frame}{La trampa de Zillow: el vendedor acepta cuando el modelo lo favorece}
-  \centering
-  \includegraphics[width=\textwidth]{negocio_04_curva_margen.pdf}
-  \lectura{Solo si el vendedor cede hasta 15\%, un margen de \mejormargen{} es rentable: \gananciacien{} millones por cada 100 ofertas, cerrando el \negociosmargen{} de los negocios.}
-  \note{Selección adversa: los vendedores aceptan nuestra oferta sobre todo cuando el modelo les sobreestima la vivienda, porque en ese caso ofrecemos más de lo que vale. Por eso, con descuentos de negociación del 5 o 10\%, ningún margen es rentable. Los descuentos que acepta el vendedor son supuestos nuestros, no datos.}
-\end{frame}
-
+\input{comunes/c11_riesgo.tex}
+\input{comunes/c12_margen.tex}
+\input{comunes/c13_zillow.tex}
 \input{comunes/c10_recomendacion.tex}
 
 \end{document}

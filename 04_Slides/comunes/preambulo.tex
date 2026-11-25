@@ -43,5 +43,21 @@
     {\small\color{gris}#3}
   \end{minipage}}
 
+% Cifra mediana, para acompañar un mapa sin quitarle espacio
+\newcommand{\cifrachica}[2]{%
+  {\LARGE\bfseries\color{azul}#1}\\[0.1em]
+  {\footnotesize\color{gris}#2}}
+
 % Mensaje corto debajo de una figura
-\newcommand{\lectura}[1]{\par\vspace{0.2em}{\small\color{gris}#1}}
+\newcommand{\lectura}[1]{\par\vspace{0.2em}{\scriptsize\color{gris}#1}}
+
+% Diapositivas de mapa vertical: el mapa ocupa toda la altura a la izquierda y
+% el título va arriba de la columna derecha, con el mismo estilo de los demás
+% títulos. \altomapa es la altura del mapa.
+\newcommand{\altomapa}{1.02\textheight}
+\newcommand{\titulolateral}[1]{%
+  {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}#1\par}\vspace{0.9em}}
+\newcommand{\mapavertical}[1]{\vspace*{-0.4em}\includegraphics[height=\altomapa]{#1}}
+
+% Figura ancha que usa casi todo el ancho de la diapositiva
+\newcommand{\figuraancha}[2][0.97]{\makebox[\textwidth]{\includegraphics[width=#1\paperwidth]{#2}}}

@@ -34,9 +34,11 @@
   \note{Se muestra el mejor envío de cada familia en el puntaje privado. Las redes neuronales quedaron cerca del Random Forest, pero muy lejos del boosting. Entre paréntesis está el número del envío.}
 \end{frame}
 
+\input{comunes/c06_escalera.tex}
+
 \begin{frame}{Por qué pierden los modelos simples}
   \centering
-  \includegraphics[width=\textwidth]{pres_modelos_simples.pdf}
+  \figuraancha{pres_modelos_simples.pdf}
   \lectura{La regresión lineal no captura interacciones (el valor de un m$^2$ depende de la zona) y comprime más los extremos; un solo árbol predice pocos precios distintos.}
   \note{Izquierda: error medio por decil de precio con localidades por fuera. Los dos modelos subestiman lo caro, pero la regresión lineal mucho más. Derecha: CART asigna el mismo precio a todos los anuncios de una hoja, así que en test predice solo unos 59 precios distintos. El Elastic Net no ayuda frente a la regresión lineal porque hay muchas más observaciones que variables.}
 \end{frame}
@@ -50,47 +52,27 @@
   \note{Esta tabla aísla el efecto del algoritmo: todas las familias usan exactamente las mismas variables. La distancia entre el peor (CART) y el mejor (XGBoost) en Kaggle es de casi 60 millones. Fíjense en la columna aleatoria: ahí el mejor es el Random Forest.}
 \end{frame}
 
-\begin{frame}{La validación aleatoria escoge el modelo equivocado}
+\begin{frame}{Qué familia gana según cómo se valida}
   \centering
   \includegraphics[width=0.88\textwidth]{pres_puestos_validacion.pdf}
   \note{Con la misma base, el Random Forest es el mejor en la validación aleatoria, pero el XGBoost gana en las validaciones espaciales y en Kaggle. El Random Forest memoriza bien a los vecinos, que en la validación aleatoria están en entrenamiento, pero extrapola mal a zonas nuevas. Las dos validaciones no identifican el mismo mejor modelo; la espacial acierta.}
 \end{frame}
 
-\begin{frame}{Dónde gana el boosting: el error por localidad}
+\begin{frame}
   \centering
-  \includegraphics[width=\textwidth]{mapa_07_mae_localidad_modelos.pdf}
+  \vspace*{-0.4em}\makebox[\textwidth]{\includegraphics[height=1.01\textheight]{mapa_07_mae_localidad_modelos.pdf}}
   \note{Cada localidad muestra su MAE cuando su grupo de localidades se dejó por fuera del entrenamiento. El ensamble reduce el error en casi todas las localidades, incluidas las del norte, que son las más parecidas a Chapinero.}
 \end{frame}
 
 \input{comunes/c08_pesos.tex}
-\input{comunes/c06_escalera.tex}
-
-\begin{frame}{¿Qué validación anticipa Kaggle?}
-  \begin{columns}[c]
-    \begin{column}{0.62\textwidth}\centering
-      \includegraphics[width=\textwidth]{pres_cv_vs_kaggle.pdf}
-    \end{column}
-    \begin{column}{0.37\textwidth}\centering
-      \includegraphics[width=\textwidth]{pres_publico_privado.pdf}
-    \end{column}
-  \end{columns}
-  \lectura{La validación espacial queda más cerca del error de Kaggle. Entre envíos parecidos, diferencias de 1 o 2 millones son ruido: el público y el privado invierten algunos pares.}
-  \note{Las dos validaciones ordenan parecido los envíos, pero la aleatoria subestima mucho más el error de Kaggle. El puntaje público usa cerca del 20\% de test y el privado el resto: arriba el orden se mantiene (29, 28, 27), pero los pares con y sin pesos 10 y 11, y 15 y 16, se invierten.}
-\end{frame}
 
 \input{comunes/c05_hedonico.tex}
 
-\begin{frame}{Ventajas y desventajas de cada familia}
-  \centering
-  \resizebox{0.95\textwidth}{!}{\input{../03_Output/Tables/pres_ventajas.tex}}
-
-  \vspace{0.8em}
-  \lectura{Pérdida fuera de zona: cuánto sube el MAE de la validación aleatoria a la de localidades por fuera. El boosting combina interacciones con una pérdida moderada al extrapolar.}
-  \note{La regresión lineal y el Elastic Net pierden poco al cambiar de zona, pero parten de un error muy alto. El Random Forest es el que más se deteriora fuera de zona. La red neuronal de una capa fue inestable: con localidades por fuera algunas predicciones explotaron.}
-\end{frame}
-
 % --- Qué significa para el negocio --------------------------------------------
 \input{comunes/c09_kaggle_negocio.tex}
+\input{comunes/c11_riesgo.tex}
+\input{comunes/c12_margen.tex}
+\input{comunes/c13_zillow.tex}
 \input{comunes/c10_recomendacion.tex}
 
 \end{document}

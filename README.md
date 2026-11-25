@@ -136,7 +136,7 @@ Cada modelo guarda su envío en `03_Output/Submissions/<envío>.csv`, el modelo 
 
 ### 4. Presentaciones (`04_Slides`)
 
-`main.R` compila al final `best_equipo_01.tex` y `compare_equipo_01.tex` con `pdflatex`. Las dos toman las figuras de `03_Output/Figures`, las tablas de `03_Output/Tables` y las cifras del texto de `03_Output/Tables/pres_cifras.tex`, así que todo lo que muestran sale del código. Las 10 diapositivas que comparten están en `04_Slides/comunes`. Cada diapositiva tiene notas para quien expone (`\note`).
+`main.R` compila al final `best_equipo_01.tex` y `compare_equipo_01.tex` con `pdflatex`. Las dos toman las figuras de `03_Output/Figures`, las tablas de `03_Output/Tables` y las cifras del texto de `03_Output/Tables/pres_cifras.tex`, así que todo lo que muestran sale del código. Las 13 diapositivas que comparten están en `04_Slides/comunes`. Cada diapositiva tiene notas para quien expone (`\note`).
 
 ## De dónde sale cada figura y tabla
 
@@ -161,7 +161,7 @@ Todas quedan en `03_Output/Figures` (PDF y PNG) y `03_Output/Tables` (CSV y TeX)
 
 ## De dónde sale cada diapositiva
 
-Las diapositivas C1 a C10 están en las dos presentaciones (`04_Slides/comunes/c01_*.tex` a `c10_*.tex`). Las figuras están en `03_Output/Figures` y las tablas en `03_Output/Tables`.
+Las diapositivas C1 a C13 están en las dos presentaciones (`04_Slides/comunes/c01_*.tex` a `c13_*.tex`). Las figuras están en `03_Output/Figures` y las tablas en `03_Output/Tables`.
 
 | Diapositiva | Mensaje | Figura o tabla | Script |
 |---|---|---|---|
@@ -175,27 +175,28 @@ Las diapositivas C1 a C10 están en las dos presentaciones (`04_Slides/comunes/c
 | C8 | Le enseñamos al modelo a mirar lo que se parece a Chapinero | `mapa_08_pesos_upz` | `01_mapas.R` |
 | C9 | Lo que gana en Kaggle no es lo que gana la empresa | `negocio_05_kaggle_vs_negocio` | `04_Results/02_negocio.R` |
 | C10 | ¿Compraríamos? | `negocio_03_semaforo_test`; cifras de `pres_cifras.tex` | `02_negocio.R`; `03_figuras_presentaciones.R` |
+| C11 | Dónde pagaríamos de más si compráramos al precio predicho | `negocio_01_riesgo_sobreestimacion_upz` | `02_negocio.R` |
+| C12 | Margen de seguridad por zona | `negocio_02_margen_seguridad_upz` | `02_negocio.R` |
+| C13 | La trampa de Zillow, con los anuncios de Chapinero | `negocio_04_curva_margen`; cifras de `pres_cifras.tex` | `02_negocio.R`; `03_figuras_presentaciones.R` |
 
-**`best_equipo_01` (Best Model Deep Dive).** Orden: portada, C1 a C8, B1, B2, B3, C9, B4, B5, B6 y C10.
+**`best_equipo_01` (Best Model Deep Dive).** Orden: portada, C1 a C8, B1 a B4, C9, C11, C12, C13 y C10.
 
 | Diapositiva | Mensaje | Figura o tabla | Script |
 |---|---|---|---|
 | B1 | El modelo distingue zonas dentro de Chapinero | `mapa_03_chapinero_prediccion_test` | `01_mapas.R` |
-| B2 | Dónde se equivoca: subestima las viviendas caras | `mapa_04_chapinero_error_oof`, `diag_sesgo_deciles` | `01_mapas.R`; `02_EDA/03_diagnostico_errores.R` |
-| B3 | Dónde el modelo tiene poca información para predecir | `mapa_05_chapinero_cobertura` | `01_mapas.R` |
-| B4 | Dónde pagaríamos de más | `negocio_01_riesgo_sobreestimacion_upz` | `02_negocio.R` |
-| B5 | Cuánto ofertar por debajo de la predicción en cada zona | `negocio_02_margen_seguridad_upz` | `02_negocio.R` |
-| B6 | La trampa de Zillow | `negocio_04_curva_margen` | `02_negocio.R` |
+| B2 | Dónde se equivoca el modelo en Chapinero | `mapa_04_chapinero_error_oof` | `01_mapas.R` |
+| B3 | Subestima las viviendas caras y sobreestima las baratas | `diag_sesgo_deciles` | `02_EDA/03_diagnostico_errores.R` |
+| B4 | Dónde el modelo tiene poca información para predecir | `mapa_05_chapinero_cobertura` | `01_mapas.R` |
 
-**`compare_equipo_01` (Algorithm Comparison).** Orden: portada, C1, C2, C3, C4, C7, P1 a P5, C8, C6, P6, C5, P7, C9 y C10.
+**`compare_equipo_01` (Algorithm Comparison).** Orden: portada, C1, C2, C3, C4, C7, P1, C6, P2 a P5, C8, C5, C9, C11, C12, C13 y C10.
 
 | Diapositiva | Mensaje | Figura o tabla | Script |
 |---|---|---|---|
 | P1 | Seis familias, un ganador claro | `pres_familias` | `03_figuras_presentaciones.R` |
 | P2 | Por qué pierden los modelos simples | `pres_modelos_simples` | `03_figuras_presentaciones.R` |
 | P3 | Con los mismos datos, el algoritmo lo cambia todo | `pres_misma_base.tex` | `03_figuras_presentaciones.R` |
-| P4 | La validación aleatoria escoge el modelo equivocado | `pres_puestos_validacion` | `03_figuras_presentaciones.R` |
+| P4 | Qué familia gana según cómo se valida | `pres_puestos_validacion` | `03_figuras_presentaciones.R` |
 | P5 | Dónde gana el boosting: el error por localidad | `mapa_07_mae_localidad_modelos` | `01_mapas.R` |
-| P6 | ¿Qué validación anticipa Kaggle? | `pres_cv_vs_kaggle`, `pres_publico_privado` | `03_figuras_presentaciones.R` |
-| P7 | Ventajas y desventajas de cada familia | `pres_ventajas.tex` | `03_figuras_presentaciones.R` |
+
+`03_figuras_presentaciones.R` también genera `pres_cv_vs_kaggle`, `pres_publico_privado` y `pres_ventajas`, que comparan la validación cruzada con Kaggle y resumen las ventajas de cada familia; no aparecen en las diapositivas.
 

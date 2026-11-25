@@ -1,4 +1,4 @@
 margen,descuento,porc_negocios,porc_compras_pagando_de_mas,ganancia_por_100_ofertas,grupo,escenario
-0.3,0.05,7.452149994784317,64.78413700897447,-251.3809575533703,Train ponderado por parecido con test,El vendedor cede hasta 5%
-0.3,0.1,10.79460673457789,44.72428854004139,-113.74691582629615,Train ponderado por parecido con test,El vendedor cede hasta 10%
-0.24,0.15,29.095055008264104,32.1665324763317,427.2232177819104,Train ponderado por parecido con test,El vendedor cede hasta 15%
+0.3,0.05,3.278688524590164,50,-108.99757283377504,Chapinero (train),El vendedor cede hasta 5%
+0.28,0.1,8.852459016393443,29.62962962962963,95.62483224027693,Chapinero (train),El vendedor cede hasta 10%
+0.17,0.15,41.967213114754095,29.6875,1153.1954906133167,Chapinero (train),El vendedor cede hasta 15%

@@ -35,9 +35,10 @@
 #              los vendedores aceptan justo cuando el modelo sobreestima.
 #           5. Kaggle frente a negocio: al multiplicar las predicciones por un
 #              factor, cómo cambian el MAE y el porcentaje de sobreestimación.
-#           Las curvas 4 y 5 se calculan en los anuncios de Chapinero de train y
+#           La curva 4 se grafica con los anuncios de Chapinero de train, que
+#           es donde la empresa compraría; su tabla también guarda el resultado
 #           en todo train ponderado por el parecido con test (pesos de
-#           10_xgb_pesos_texto.R), que aproxima la composición de test.
+#           10_xgb_pesos_texto.R). La curva 5 muestra los dos grupos.
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 #           02_Data/Processed/pesos_adversarial_texto.rds
 #           02_Data/Raw/MapasBogota/capas/{44_localidades,45_upz}.geojson
@@ -235,8 +236,8 @@ guardar(mapa_semaforo, "negocio_03_semaforo_test", ancho = 7, alto = 8.8)
 
 # ------------------------------------------------------------------------------
 # 4. Curva de decisión del margen de seguridad
-# Se calcula en todo train ponderado por el parecido con test; la tabla también
-# guarda el resultado en los anuncios de Chapinero de train.
+# Se grafica con los anuncios de Chapinero de train; la tabla también guarda el
+# resultado en todo train ponderado por el parecido con test.
 # ------------------------------------------------------------------------------
 # Resultados de ofertar pred * (1 - margen) cuando el vendedor acepta hasta un
 # descuento `descuento`, con pesos `w` por anuncio.
@@ -264,7 +265,7 @@ curva <- bind_rows(
 write_csv(curva, file.path(ruta_tablas, "negocio_curva_margen.csv"))
 
 curva_graf <- curva %>%
-  filter(grupo == "Train ponderado por parecido con test") %>%
+  filter(grupo == "Chapinero (train)") %>%
   mutate(escenario = factor(sprintf("El vendedor cede hasta %.0f%%", 100 * descuento),
                             levels = sprintf("El vendedor cede hasta %.0f%%", 100 * descuentos_vendedor)))
 mejor_margen <- curva_graf %>%
@@ -294,10 +295,12 @@ g_ganancia <- curva_graf %>%
   geom_line(linewidth = 1) +
   geom_point(data = filter(mejor_margen, ganancia_por_100_ofertas > 0), size = 3, show.legend = FALSE) +
   geom_text(data = filter(mejor_margen, ganancia_por_100_ofertas > 0),
-            aes(label = sprintf("margen %.0f%%", 100 * margen)),
+            aes(label = sprintf("margen %.0f%%", 100 * margen),
+                hjust = if_else(margen > 0.25, 0.9, 0.5)),
             vjust = -1.1, size = 3.1, show.legend = FALSE) +
   scale_x_continuous(labels = label_percent()) +
-  scale_y_continuous(labels = label_comma(big.mark = ".", decimal.mark = ",")) +
+  scale_y_continuous(labels = label_comma(big.mark = ".", decimal.mark = ","),
+                     expand = expansion(mult = c(0.05, 0.15))) +
   scale_color_manual(values = colores_escenario, name = NULL) +
   labs(title = "Ganancia neta por cada 100 ofertas",
        subtitle = "Precio de reventa (precio observado) menos el precio pagado.",
@@ -323,7 +326,7 @@ g_curva <- g_curva +
   plot_annotation(
     title = "Regla de compra: ofertar la predicción menos un margen de seguridad",
     subtitle = texto_escenarios,
-    caption = "Predicciones fuera de muestra del mejor modelo con localidades completas por fuera; anuncios de train ponderados por parecido con test.",
+    caption = "Predicciones fuera de muestra del mejor modelo con localidades completas por fuera; anuncios de Chapinero en train.",
     theme = theme(plot.title = element_text(face = "bold", size = 14),
                   plot.subtitle = element_text(color = "grey30", size = 10),
                   plot.caption = element_text(color = "grey40", size = 8, hjust = 0)))
