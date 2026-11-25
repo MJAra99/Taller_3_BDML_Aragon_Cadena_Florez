@@ -1,30 +1,7 @@
 # ==============================================================================
 # 15_ensamble_v2.R
 # Objetivo: superar el mejor puntaje público de la competencia (148,2 M). El
-#           mejor envío del equipo es el 27 (150,45 M). Hay que bajar ~1,5%.
-#
-# De dónde puede salir ese 1,5% (lo que ya sabemos):
-#   1. El 25 combinó el 20 (variables nuevas del equipo) con el 23 (palabras
-#      del anuncio como columnas + objetivo precio por m2) y el optimizador
-#      les dio ~50/50 a los dos. Es decir: cada uno tiene información que el
-#      otro no tiene. Nadie ha entrenado UN modelo con las dos cosas juntas.
-#   2. Los XGBoost del equipo se entrenan con UNA semilla. Con submuestreo de
-#      filas (subsample = 0,8) y columnas (colsample), cada semilla da un
-#      modelo algo distinto; promediar varias semillas reduce varianza (es
-#      bagging sobre el propio boosting).
-#   3. El sesgo de nivel. Kaggle premió multiplicar el 16 por ~1,054 (la
-#      parábola de diag_factor_optimo.csv): de 156,9 a ~152-153 M. El 27 no
-#      tiene ese ajuste: su calibración se estimó con la CV aleatoria, que
-#      casi no ve el sesgo de Chapinero.
-#
-# Evidencia previa (réplica en Python con la base actual, CV aleatoria por
-# grupos, MAE ponderado por el parecido con test, millones de COP):
-#     como el 20 (log precio)                         110,4
-#     20 + palabras + precio por m2, 1 semilla        109,0
-#     20 + palabras + precio por m2, 3 semillas       107,2
-#     ídem con profundidad 8, 3 semillas              108,4
-#     ensamble de los anteriores                      106,3 - 106,5
-#   (como referencia, el 25 del equipo tuvo 107,3 con sus folds)
+#           mejor envío del equipo es el 27 (150,45 M). 
 #
 # Un solo envío: 28_ensamble_v2_nivel
 #   Es la combinación de las tres palancas y la apuesta con mejor puntaje
@@ -37,10 +14,6 @@
 #     c) factor de nivel estimado con una regla que, aplicada al modelo 16,
 #        reproduce el factor que Kaggle premió (sección 7). El factor no toca
 #        los inmuebles con re-anuncio.
-#   Por qué no subir el modelo nuevo solo o el ensamble sin factor: cada
-#   palanca mejoró por separado (el ensamble 25 superó a sus miembros; el
-#   factor bajó al 16 de 156,9 a ~153 M), y no hay razón para dejar alguna
-#   por fuera si solo se sube un archivo.
 #
 # Entradas: 02_Data/Processed/{db_train,db_test,base_limpia,features_mejorado,
 #           pesos_adversarial_texto}.rds; 02_Data/Raw/Kaggle/{train,test}.csv
@@ -54,9 +27,6 @@
 #           fila nueva en resultados_modelos.csv
 #           03_Output/Tables/ensamble_v2_{pesos,comparacion,factor}.csv
 #
-# Tiempo aproximado: 45-75 minutos (dos modelos x 3 semillas). Para una
-# prueba rápida, n_semillas <- 1. Cada modelo se guarda en caché: si el .rds
-# ya existe se carga en vez de re-entrenar (borrarlo para re-entrenar).
 # ==============================================================================
 
 source(here::here("01_Scripts", "00_utils.R"))
@@ -73,9 +43,7 @@ recortar <- function(p) pmin(pmax(p, limites_precio[1]), limites_precio[2])
 n_semillas <- 3                       # semillas por modelo (1 = prueba rápida)
 semillas   <- semilla + seq_len(n_semillas) - 1
 
-# ------------------------------------------------------------------------------
-# 1. Datos: base del equipo + variables nuevas del 20 (13_xgb_mejorado.R)
-# ------------------------------------------------------------------------------
+##### 1. Datos: base del equipo + variables nuevas del 20 (13_xgb_mejorado.R) #####
 datos   <- fun_datos_modelo()
 folds   <- fun_todos_folds(datos$train)
 f_ale   <- folds$aleatoria
@@ -95,8 +63,7 @@ fun_restaurar_na <- function(df) {
 
 # Variables nuevas del 20, ya calculadas y guardadas por 13_xgb_mejorado.R:
 # precisión de coordenadas, entorno suavizado, 28 barrios mencionados en el
-# texto, área rescatada, comparable exacto. Se agregan igual que allá
-# (función fun_agregar de ese script).
+# texto, área rescatada, comparable exacto.
 features <- readRDS(here("02_Data", "Processed", "features_mejorado.rds"))
 vars_nuevas <- setdiff(names(features), c("property_id", "area_rescate"))
 fun_agregar <- function(df) {
@@ -122,7 +89,7 @@ y_train <- datos$train$obj_log_price
 precio  <- datos$train$obj_price
 es_chap <- datos$train$cat_localidad == "CHAPINERO"
 
-# Pesos: parecido con test (w) y casas con peso 0,3 (lo que escogió el 20).
+# Pesos: parecido con test (w) y casas con peso 0,3 (lo que escogió el modelo 20 que hicimos).
 w <- datos$train %>% select(property_id) %>%
   left_join(readRDS(here("02_Data", "Processed", "pesos_adversarial_texto.rds")),
             by = "property_id") %>%
@@ -131,11 +98,10 @@ stopifnot(!anyNA(w))
 peso_entreno <- w^0.5 * if_else(datos$train$cat_tipo == "Casa", 0.3, 1)
 peso_entreno <- peso_entreno / mean(peso_entreno)
 
-# Offset del precio por m2 (como el 22/23 del script 14). El área es la
+# Offset del precio por m2 (como el 22/23 que se tiene en el script 14). El área es la
 # imputada por 05_merge.R, salvo donde el 20 la rescató del texto; se acota a
 # los percentiles 1 y 99 de train para que un área absurda no dispare el
-# precio. OJO: se toma ANTES de restaurar los NA (si no, el offset tendría
-# faltantes).
+# precio. 
 fun_area_offset <- function(base, conx) {
   if_else(coalesce(conx$bin_area_rescatada, 0L) == 1, conx$num_area, base$num_area)
 }
@@ -156,13 +122,10 @@ fun_metricas <- function(pred_log) {
          sesgo_chap = mean(err[ok & es_chap]))
 }
 
-# ------------------------------------------------------------------------------
-# 2. Palabras del anuncio como columnas (mismo procedimiento del 23)
-# ------------------------------------------------------------------------------
+##### 2. Palabras del anuncio como columnas (mismo procedimiento del 23) #####
+
 # Minúsculas, sin tildes, sin palabras vacías, raíces de Snowball, palabras y
-# bigramas; se conservan los términos presentes en al menos 2% de los
-# anuncios, como indicadoras 0/1 en matriz DENSA (en una dispersa XGBoost
-# confundiría los ceros con faltantes).
+# bigramas
 fun_dtm <- function(min_prop = 0.02) {
   textos <- readRDS(here("02_Data", "Processed", "base_limpia.rds")) %>%
     distinct(property_id, .keep_all = TRUE) %>%
@@ -197,9 +160,8 @@ rm(pal); invisible(gc())
 message("Matriz completa: ", ncol(xw_train), " columnas (", ncol(x_train),
         " del 20 + palabras)")
 
-# ------------------------------------------------------------------------------
-# 3. XGBoost con offset, varias semillas
-# ------------------------------------------------------------------------------
+##### 3. XGBoost con offset, varias semillas #####
+
 fun_mejor_ronda <- function(modelo) {
   ronda <- attributes(modelo)$early_stop$best_iteration
   if (is.null(ronda)) ronda <- as.integer(xgb.attr(modelo, "best_iteration")) + 1
@@ -239,12 +201,9 @@ fun_cv <- function(parametros, folds, sem, rondas = NULL, max_rondas = 3000) {
 #   - CV aleatoria: promedio de las n semillas (en log). Es la que se usa
 #     para los pesos del ensamble y la calibración.
 #   - CV por localidades: UNA semilla (solo se usa para la regla del factor
-#     de la sección 7; ahorra tiempo).
-#   - Test: promedio de n modelos entrenados con todo train.
-# ¿Por qué promediar semillas ayuda? Cada semilla escoge filas y columnas al
-# azar distintas; los modelos tienen el mismo sesgo pero errores de varianza
-# parcialmente independientes, y el promedio los cancela en parte. En la
-# réplica bajó el MAE ponderado de 109,0 a 107,2 M.
+#     de la sección 7).
+#   - Test: promedio de n modelos entrenados con el conjunto de train.
+
 fun_modelo <- function(nombre, parametros) {
   ruta <- file.path(ruta_mod, paste0(nombre, ".rds"))
   if (file.exists(ruta)) { message("Cargando ", nombre); return(readRDS(ruta)) }
@@ -289,21 +248,18 @@ par_base <- list(objective = "reg:squarederror", eval_metric = "mae",
                  max_depth = 6, min_child_weight = 1, nthread = nucleos)
 
 # 3.1 Miembro principal: profundidad 6 y min_child_weight 1 (los
-# del 20); colsample 0,5 (como el 23) porque hay cientos de columnas de
+# del 20); colsample 0,5 (como el 23) porque hay un gran número de columnas de
 # palabras y conviene que cada árbol vea una muestra de ellas.
 res_prof6 <- fun_modelo("xgb_completo_palabras_m2_prof6", par_base)
 
 # 3.2 Variante más profunda.
 # Árboles de profundidad 8 capturan interacciones de más alto orden (p. ej.
-# barrio x estrato x área x palabra). En la afinación del 20 la profundidad 8
-# dio mejor MAE sin ponderar y peor ponderado: se equivoca DISTINTO, que es
-# lo que sirve en un ensamble. min_child_weight 5 la regulariza un poco.
+# barrio x estrato x área x palabra). 
 res_prof8 <- fun_modelo("xgb_completo_palabras_m2_prof8",
                         modifyList(par_base, list(max_depth = 8, min_child_weight = 5)))
 
-# ------------------------------------------------------------------------------
-# 4. Promedio de duplicados en test (idea del 20)
-# ------------------------------------------------------------------------------
+##### 4. Promedio de duplicados en test (idea de nuestro modelo 20) #####
+
 # Anuncios con la misma descripción (de al menos 40 caracteres) reciben el
 # promedio de sus predicciones: si son el mismo inmueble, deberían tener el
 # mismo precio y el promedio reduce ruido. Se aplica también a la CV, para
@@ -321,13 +277,7 @@ fun_promediar_duplicados <- function(pred_log, desc) {
   ave(pred_log, grupo, FUN = function(z) mean(z, na.rm = TRUE))
 }
 
-# ------------------------------------------------------------------------------
-# 5. Ensamble v2
-# ------------------------------------------------------------------------------
-# Candidatos: 20 y 23 (del equipo, ya con predicciones fuera de muestra en
-# disco) y los dos miembros nuevos (profundidad 6 y 8). Pesos convexos que minimizan el MAE
-# ponderado por w en la CV aleatoria; evaluación con cross-fitting (los pesos
-# de cada fold se estiman sin ese fold). Igual que el 25.
+##### 5. Ensamble v2 #####
 fun_leer <- function(archivo) {
   r <- readRDS(file.path(ruta_pred, archivo))
   p <- if ("pred_log" %in% names(r)) r$pred_log else log(r$pred)
@@ -373,9 +323,8 @@ ens <- list(aleatoria = fun_promediar_duplicados(log(ens_cf), desc_train),
             localidad = fun_promediar_duplicados(log(as.numeric(oof_loc %*% pesos)), desc_train),
             test      = fun_promediar_duplicados(log(as.numeric(test_mat %*% pesos)), desc_test))
 
-# ------------------------------------------------------------------------------
-# 6. Calibración estirada y re-anuncios (como el 26 y el 27)
-# ------------------------------------------------------------------------------
+# 6. Calibración estirada y re-anuncios (como los modelos 26 y 27)
+
 # Calibración en log: p_cal = a + m + b (p - m). b > 1 corrige la regresión a
 # la media; a corrige el nivel. Se estima con la CV aleatoria ponderada.
 fun_calibrar <- function(p, obs, pond) {
@@ -399,10 +348,7 @@ ens_cal <- list(aleatoria = cal_cf,
                 localidad = aplicar_cal(ens$localidad, cal),
                 test      = aplicar_cal(ens$test, cal))
 
-# Re-anuncios: mismo procedimiento del 27 (misma descripción de 40+
-# caracteres, mismas habitaciones, baños y tipo, a menos de 3 km). Se usa
-# lambda = 1 (el 14 encontró que el precio del re-anuncio solo, sin mezclar
-# con el modelo, es lo que minimiza el MAE en train).
+# Re-anuncios: mismo procedimiento del modelo 27 
 fun_llaves <- function(crudo, base) {
   crudo %>% filter(property_id %in% base$property_id) %>%
     transmute(property_id, desc = fun_normalizar(description),
@@ -428,28 +374,7 @@ tiene_re  <- !is.na(precio_re)
 # Predicción sin factor (solo para la tabla de comparación; no se envía).
 pred_sin_factor <- if_else(tiene_re, log(precio_re), ens_cal$test)
 
-# ------------------------------------------------------------------------------
-# 7. Factor de nivel
-# ------------------------------------------------------------------------------
-# El problema: ¿cuánto subestima el modelo en Chapinero? Las dos CV dan
-# respuestas extremas:
-#   - CV aleatoria: los anuncios de Chapinero de train se validan con
-#     vecinos de Chapinero en el entrenamiento -> casi no hay sesgo
-#     (factor óptimo en Chapinero ~1,01-1,015). Es demasiado optimista:
-#     en test casi no hay datos de Chapinero.
-#   - CV por localidades: Chapinero se valida SIN ningún dato de Chapinero
-#     -> sesgo grande (factor óptimo ~1,07-1,085). Es demasiado pesimista:
-#     test sí tiene los 305 anuncios de Chapinero de train y mucha
-#     información de los bordes.
-# Test está entre los dos casos. Regla: usar la MEDIA GEOMÉTRICA de los dos
-# factores óptimos (el promedio de sus logaritmos, porque un factor es un
-# cambio porcentual).
-# Validación de la regla con el modelo 16, del que conocemos la respuesta de
-# Kaggle: aleatoria 1,015, localidades 1,085 -> regla = 1,049; la parábola de
-# los puntajes de Kaggle (envíos 16, 18 y 19) da 1,054. La regla reproduce el
-# factor que premió Kaggle sin usar Kaggle.
-# El factor se aplica solo a los inmuebles SIN re-anuncio: un precio
-# observado no tiene el sesgo del modelo.
+##### 7. Factor de nivel #####
 fun_factor_chap <- function(pred_log, grilla = seq(0.95, 1.20, by = 0.0025)) {
   p <- exp(pred_log)
   mae <- map_dbl(grilla, ~ mean(abs(recortar(.x * p[es_chap]) - precio[es_chap])))
@@ -469,19 +394,12 @@ write_csv(tabla_factor, file.path(ruta_tab, "ensamble_v2_factor.csv"))
 factor_nivel <- tabla_factor$factor_regla[2]
 message("Factor de nivel: ", round(factor_nivel, 4))
 
-# EL ENVÍO.
+# Para envío
 pred_final <- if_else(tiene_re, log(precio_re), ens_cal$test + log(factor_nivel))
 fun_submission(datos$test$property_id, pred_final, "28_ensamble_v2_nivel",
                limites = limites_precio)
 
-# ------------------------------------------------------------------------------
-# 8. Registro y comparación
-# ------------------------------------------------------------------------------
-# Nota: la CV del envío NO incluye los re-anuncios (en train hay muchos más
-# que en test y exagerarían la mejora; ver script 14). Mide ensamble +
-# calibración + factor. Su MAE en train puede salir PEOR que el del ensamble
-# sin factor: el factor está pensado para test, que es más caro y más
-# subestimado que train. El juez del factor es Kaggle.
+##### 8. Registro y comparación #####
 oof_final <- map(ens_cal[c("aleatoria", "localidad")], ~ .x + log(factor_nivel))
 iwalk(oof_final, ~ saveRDS(tibble(property_id = datos$train$property_id, pred_log = .x),
                            file.path(ruta_pred, paste0("oof_28_ensamble_v2_nivel_", .y, ".rds"))))
@@ -507,14 +425,3 @@ comparacion <- bind_rows(
                           median(recortar(exp(pred_final)))))
 write_csv(comparacion, file.path(ruta_tab, "ensamble_v2_comparacion.csv"))
 print(comparacion %>% mutate(across(where(is.double), ~ round(.x / 1e6, 1))), width = Inf)
-
-# ------------------------------------------------------------------------------
-# CÓMO LEERLO
-# ------------------------------------------------------------------------------
-# * mae_pond (CV aleatoria ponderada) es el criterio que mejor ha anticipado
-#   a Kaggle. Comparar el ensamble calibrado contra el 25/26 (~107,3 M).
-# * La CV del envío NO sirve para juzgar el factor: la prueba es Kaggle
-#   frente al 27 (150,45 M).
-# * Riesgo: el puntaje público usa solo una parte de test. Diferencias de
-#   1-2 M pueden ser ruido.
-# ==============================================================================
