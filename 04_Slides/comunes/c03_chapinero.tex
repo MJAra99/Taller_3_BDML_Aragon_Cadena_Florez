@@ -1,0 +1,28 @@
+% C3. Chapinero es más caro y tiene peor información
+\begin{frame}
+  \begin{columns}[c]
+    \begin{column}{0.6\textwidth}\centering
+      \mapavertical{mapa_02_precio_m2_upz.pdf}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \titulolateral{Chapinero es más caro, casi todo apartamentos y con ubicación más imprecisa}
+      \resizebox{\linewidth}{!}{%
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        & Chapinero & Bogotá \\
+        \midrule
+        Precio mediano (M)$^{*}$ & \preciomdchap & \preciomdresto \\
+        Apartamentos & \aptotest & \aptotrain \\
+        Coordenadas redondeadas & \coordredondeada & \coordredtrain \\
+        \bottomrule
+      \end{tabular}}
+
+      \vspace{0.6em}
+      {\scriptsize\color{gris}Apartamentos y coordenadas: test (Chapinero) frente a train (Bogotá). $^{*}$ Test no tiene precio: se compara Chapinero con el resto de Bogotá, ambos en train.\par}
+
+      \vspace{0.6em}
+      {\scriptsize\color{gris}Coordenadas redondeadas: con 3 decimales o menos, un error de ubicación de unos 110 m.\par}
+    \end{column}
+  \end{columns}
+  \note{Chapinero está entre las zonas más caras de la ciudad. En test casi todo son apartamentos, y la ubicación es menos precisa: más de la mitad de las coordenadas viene redondeada. Además, al \sinareatest{} de test le falta el área, frente a solo el \sinareachap{} de los anuncios de Chapinero que sí están en train.}
+\end{frame}
