@@ -44,6 +44,7 @@
 #           02_Data/Raw/MapasBogota/capas/{44_localidades,45_upz}.geojson
 #           03_Output/Predictions/oof_29_ensamble_embeddings_localidad.rds
 #           03_Output/Submissions/29_ensamble_embeddings.csv
+#           03_Output/Models/resultados_modelos.csv (factores de los envíos 18 y 19)
 # Salidas:  03_Output/Figures/negocio_*.{pdf,png}
 #           03_Output/Tables/negocio_*.csv
 # ==============================================================================
@@ -377,10 +378,21 @@ g_sobre <- curva_factor %>%
        x = "Factor que multiplica la predicción", y = "Anuncios sobreestimados", linetype = NULL) +
   tema_grafica
 
+# Factores que usaron los envíos 18 y 19 (12_ajuste_sesgo.R), según la columna
+# de hiperparámetros de resultados_modelos.csv.
+factores_envios <- read_csv(here("03_Output", "Models", "resultados_modelos.csv"),
+                            col_types = cols(.default = col_character())) %>%
+  filter(str_detect(modelo, "^1[89]_")) %>%
+  arrange(modelo) %>%
+  mutate(factor = as.numeric(str_match(hiperparametros, "factor = ([0-9.]+)")[, 2])) %>%
+  pull(factor)
+texto_factores <- paste(format(factores_envios, nsmall = 2, decimal.mark = ","), collapse = " y ")
+
 g_factor <- (g_mae | g_sobre) +
   plot_annotation(
     title = "El objetivo de la competencia no es el objetivo del negocio",
-    subtitle = paste0("Los envíos 18 y 19 multiplicaron las predicciones por 1,03 y 1,10 y bajaron el MAE en Kaggle, ",
+    subtitle = paste0("Los envíos 18 y 19 multiplicaron las predicciones por ", texto_factores,
+                      " y bajaron el MAE en Kaggle, ",
                       "pero para comprar\nconviene lo contrario: ofertar por debajo de la predicción (zona azul)."),
     caption = "Predicciones fuera de muestra del mejor modelo con localidades completas por fuera.",
     theme = theme(plot.title = element_text(face = "bold", size = 14),

@@ -17,6 +17,9 @@
 #           3. Con esos hiperparámetros y ese número de rondas fijo se calcula
 #              el MAE en pesos con los cuatro esquemas de validación.
 #           4. Se entrena el modelo final con todo train y se predice test.
+#           Usa la base con la que se subió el envío: deja por fuera las
+#           variables de texto como datos (num_txt_*), que se agregaron
+#           después (fun_vars_excluidas en 00_utils.R, versión "final").
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 # Salidas:  03_Output/Submissions/12_xgb_base_final.csv
 #           03_Output/Models/12_xgb_base_final.rds
@@ -29,7 +32,7 @@ pacman::p_load(xgboost)
 envio   <- "12_xgb_base_final"
 familia <- "XGBoost"
 
-datos <- fun_datos_modelo()
+datos <- fun_datos_modelo("final")
 folds <- fun_todos_folds(datos$train)
 
 # ------------------------------------------------------------------------------

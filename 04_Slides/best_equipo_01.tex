@@ -63,11 +63,11 @@
   \note{Estos errores son de anuncios de train predichos sin ver su localidad: es la mejor aproximación al error en test, porque en test no conocemos el precio. El error no se concentra en una sola zona: hay rojos y azules mezclados en toda la localidad.}
 \end{frame}
 
-\begin{frame}{Subestima las viviendas caras y sobreestima las baratas}
+\begin{frame}{Para ofertar importa el error según la predicción, y ahí casi no hay sesgo}
   \centering
-  \includegraphics[height=0.78\textheight]{diag_sesgo_deciles.pdf}
-  \lectura{Aleatoria: validación cruzada estándar, con los anuncios repartidos al azar. Localidades: validación cruzada espacial, con una localidad completa por fuera. Con las dos, lo caro queda por debajo y lo barato por encima.}
-  \note{El patrón por decil es típico de modelos que predicen la media: comprimen los extremos. Para la empresa, lo grave es la parte baja: en las viviendas baratas el modelo sobreestima, y ahí es donde pagaría de más.}
+  \includegraphics[height=0.74\textheight]{pres_sesgo_deciles.pdf}
+  \lectura{Según el precio real, sobreestima lo más barato (\sesgobarato) y subestima lo más caro (\sesgocaro). Según la predicción, lo único que se conoce al ofertar, el error mediano es casi cero: el riesgo es la dispersión, no un sesgo.}
+  \note{Aleatoria es la validación cruzada estándar, con los anuncios repartidos al azar; localidades es la validación cruzada espacial, con una localidad completa por fuera. Condicionar en el precio real siempre muestra regresión a la media: los modelos que predicen la media comprimen los extremos. Pero la empresa no conoce el precio real cuando oferta, solo la predicción. Dada la predicción, el modelo no está sesgado; lo que hay que cubrir es la dispersión (las bandas), y eso es lo que hace el margen de seguridad.}
 \end{frame}
 
 \begin{frame}

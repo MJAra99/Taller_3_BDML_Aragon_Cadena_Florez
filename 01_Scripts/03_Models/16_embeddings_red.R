@@ -41,6 +41,8 @@
 #             oof_23_xgb_palabras_m2_{aleatoria,localidad}.rds
 # Salidas:  03_Output/Submissions/29_ensamble_embeddings.csv, 30_nnet_embeddings.csv
 #           03_Output/Models/{xgb_emb_prof6,nnet_emb,emb_ridge}.rds (en caché)
+#           03_Output/Predictions/oof_29_ensamble_embeddings_{aleatoria,localidad}.rds
+#           03_Output/Predictions/oof_30_nnet_embeddings_{aleatoria,localidad}.rds
 #           03_Output/Tables/emb_{pca_varianza,pesos,comparacion,factor}.csv
 #           03_Output/Figures/emb_pca_varianza.{pdf,png}
 #           filas nuevas en resultados_modelos.csv

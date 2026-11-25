@@ -3,6 +3,9 @@
 # Objetivo: árbol de regresión (CART) del log del precio con todos los
 #           predictores de la base completa. Se afina el parámetro de
 #           complejidad (cp), que controla el tamaño del árbol.
+#           Usa la base completa con la que se subió el envío: deja por
+#           fuera las variables que se agregaron después (fun_vars_excluidas
+#           en 00_utils.R, versión "completa").
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 # Salidas:  03_Output/Submissions/07_cart_completa.csv
 #           03_Output/Models/07_cart_completa.rds
@@ -15,6 +18,7 @@ pacman::p_load(rpart)
 grid <- expand.grid(cp = 10^seq(-6, -2, length.out = 12))
 
 resultado <- fun_correr_caret(envio = "07_cart_completa",
+                              version = "completa",
                               familia = "CART",
                               metodo = "rpart",
                               grid = grid)

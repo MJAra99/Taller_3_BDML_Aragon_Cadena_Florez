@@ -11,15 +11,15 @@
         \item Valor de referencia del suelo, avalúos y estrato por manzana
         \item TransMilenio, metro, SITP y ciclorrutas
         \item Parques, árboles, colegios, IPS, comercio y restaurantes
-        \item Riesgo, elevación y precio de los vecinos
+        \item Riesgo y elevación
       \end{itemize}
       {\footnotesize\textbf{\color{azul}\nvartexto{} variables del texto}}
       \begin{itemize}\scriptsize
         \item Área, baños, parqueaderos y piso escritos en el anuncio
         \item Palabras clave (terraza, gimnasio, lujo) y barrios
-        \item Lasso sobre las palabras y 15 tópicos (LDA)
+        \item Lasso sobre las palabras y \ntopicos{} tópicos (LDA)
       \end{itemize}
     \end{column}
   \end{columns}
-  \note{El enunciado pide al menos cuatro variables externas y cuatro de texto; tenemos muchas más. Las externas vienen de las capas de Mapas Bogotá y de Catastro. Del texto sacamos números que no estaban en las columnas (área, baños) y también usamos el texto como datos: un Lasso que predice el precio con las palabras y tópicos que resumen de qué habla cada anuncio.}
+  \note{El enunciado pide al menos cuatro variables externas y cuatro de texto; tenemos muchas más. Las externas vienen de las capas de Mapas Bogotá y de Catastro. Del texto sacamos números que no estaban en las columnas (área, baños) y también usamos el texto como datos: un Lasso que predice el precio con las palabras y tópicos que resumen de qué habla cada anuncio. Aparte de estos dos grupos, el modelo usa el precio por metro cuadrado de los anuncios vecinos en train (rezago espacial), que no viene de una fuente externa.}
 \end{frame}

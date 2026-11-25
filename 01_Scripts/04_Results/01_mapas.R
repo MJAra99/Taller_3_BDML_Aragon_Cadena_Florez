@@ -199,7 +199,7 @@ mapa_3 <- ggplot() +
                                                title.position = "top")) +
   coord_chap() +
   labs(title = "Precio por m2 que predice el mejor modelo en Chapinero",
-       subtitle = "Cada punto es un anuncio de test con área observada.\nPredicción del envío 29 (ensamble con embeddings).",
+       subtitle = "Cada punto es un anuncio de test con área observada.\nPredicción del envío 29 (ensamble de XGBoost).",
        caption = "Colores recortados entre los percentiles 2 y 98. Líneas grises: UPZ. Borde negro: Chapinero.") +
   tema_mapa
 guardar_mapa(mapa_3, "mapa_03_chapinero_prediccion_test", ancho = 7, alto = 8.5)

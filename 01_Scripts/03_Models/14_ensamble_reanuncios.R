@@ -41,7 +41,8 @@
 #             03_Output/Predictions/oof_20_{aleatoria,localidad}.rds
 # Salidas:  03_Output/Submissions/22_*.csv ... 27_*.csv
 #           03_Output/Models/22_*.rds ... y filas en resultados_modelos.csv
-#           03_Output/Predictions/oof_{22,23,24}_{aleatoria,localidad}.rds
+#           03_Output/Predictions/oof_<envío>_{aleatoria,localidad}.rds de los
+#             envíos 22 a 27
 #           03_Output/Tables/ensamble_{pesos,comparacion,reanuncios}.csv
 #           03_Output/Figures/ensamble_comparacion.{pdf,png}
 #

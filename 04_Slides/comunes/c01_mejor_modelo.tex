@@ -13,12 +13,12 @@
     \node[caja] (datos) {Anuncios de\\Properati\\+ Mapas Bogotá};
     \node[caja, right=of datos] (vars) {Tamaño, entorno,\\precio de vecinos\\y texto};
     \node[caja, right=of vars] (pesos) {Pesos: más\\importancia a lo\\parecido a Chapinero};
-    \node[caja, right=of pesos] (xgb) {4 XGBoost\\(precio y\\precio por m$^2$)};
+    \node[caja, right=of pesos] (xgb) {4 XGBoost:\\1 de precio,\\3 de precio\\por m$^2$};
     \node[caja, right=of xgb] (ens) {Ensamble,\\calibración y\\re-anuncios};
     \draw[flecha] (datos) -- (vars);
     \draw[flecha] (vars) -- (pesos);
     \draw[flecha] (pesos) -- (xgb);
     \draw[flecha] (xgb) -- (ens);
   \end{tikzpicture}
-  \note{El MAE es el error absoluto medio: en promedio el precio predicho se aleja \maeprivado{} millones del precio de venta, cerca de \maepctprecio{} del precio típico. El modelo combina cuatro XGBoost; dos predicen el precio y dos el precio por metro cuadrado. Los pesos hacen que el modelo aprenda más de los anuncios parecidos a los de Chapinero. Los re-anuncios son viviendas de test que ya aparecían en train con otra publicación.}
+  \note{El MAE es el error absoluto medio: en promedio el precio predicho se aleja \maeprivado{} millones del precio de venta, cerca de \maepctprecio{} del precio típico. El modelo combina cuatro XGBoost: uno predice el precio y tres el precio por metro cuadrado. El envío también probó agregar modelos con embeddings del texto, pero el ensamble les dio un peso de casi cero, así que en la práctica es un ensamble de XGBoost. Los pesos hacen que el modelo aprenda más de los anuncios parecidos a los de Chapinero. Los re-anuncios son viviendas de test que ya aparecían en train con otra publicación.}
 \end{frame}

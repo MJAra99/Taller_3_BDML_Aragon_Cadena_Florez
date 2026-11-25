@@ -19,10 +19,14 @@
 #           8. Validación cruzada frente a Kaggle, y puntaje público frente a
 #              privado, para todos los envíos.
 #           9. Tabla de ventajas y desventajas de cada familia.
-# Entradas: 02_Data/Raw/Kaggle/{test.csv,kaggle_puntajes.csv}
+#           10. Sesgo del mejor ensamble por decil del precio observado y del
+#               precio predicho, con validación aleatoria y con localidades.
+#           Las cifras de las secciones 2, 4, 5 y 7 que citan las diapositivas
+#           se agregan a pres_cifras.tex, que se escribe al final.
+# Entradas: 02_Data/Raw/Kaggle/{train.csv,test.csv,kaggle_puntajes.csv}
 #           02_Data/Processed/db_{train,test}.rds
 #           03_Output/Models/{resultados_modelos.csv,20_xgb_mejorado.rds}
-#           03_Output/Predictions/oof_29_ensamble_embeddings_localidad.rds
+#           03_Output/Predictions/oof_29_ensamble_embeddings_{aleatoria,localidad}.rds
 #           03_Output/Tables/negocio_{semaforo_resumen,mejor_margen}.csv
 #           03_Output/Submissions/{07_cart_completa,09_xgb_completa,
 #           29_ensamble_embeddings}.csv
@@ -129,11 +133,11 @@ n_grupo <- function(g) grupos_base$n[grupos_base$grupo == g]
 
 cifras <- c(
   maeprivado      = millones(mejor$kaggle_privado),
-  maepublico      = millones(mejor$kaggle_publico),
-  mejorenvio      = str_replace_all(mejor$envio, "_", "\\\\_"),
   preciotipico    = millones(precio_tipico_test, 0),
   maepctprecio    = pct(mejor$kaggle_privado / precio_tipico_test),
   ntrain          = format(nrow(train), big.mark = "."),
+  nrawtrain       = format(nrow(train_raw), big.mark = "."),
+  ncopias         = format(nrow(train_raw) - nrow(train), big.mark = "."),
   ntest           = format(nrow(test), big.mark = "."),
   nchaptrain      = format(sum(es_chap), big.mark = "."),
   pcttestchap     = pct(mean(test$cat_localidad == "CHAPINERO")),
@@ -142,14 +146,13 @@ cifras <- c(
   aptotest        = pct(mean(test$cat_tipo == "Apartamento")),
   aptotrain       = pct(mean(train$cat_tipo == "Apartamento")),
   sinareatest     = pct(mean(test$bin_area_na == 1)),
-  sinareatrain    = pct(mean(train$bin_area_na == 1)),
   sinareachap     = pct(mean(train$bin_area_na[es_chap] == 1)),
   coordredondeada = pct(mean(decimales_lat <= 3)),
   coordredtrain   = pct(mean(fun_decimales(train_raw$lat) <= 3)),
   nvarexternas    = n_grupo("Entorno urbano y servicios") + n_grupo("Valor del suelo (Catastro)"),
   nvartexto       = n_grupo("Texto del anuncio"),
+  ntopicos        = sum(str_detect(names(train), "^num_txt_topico_")),
   nenvios         = nrow(kaggle),
-  maecv           = millones(resultados$mae_cv_localidad[resultados$modelo == mejor$envio]),
   margenchap      = pct(1 - 1 / quantile(razon_chap, 0.9)),
   sobreestimachap = pct(mean(razon_chap > 1)),
   sobrediezchap   = pct(mean(razon_chap > 1.1)),
@@ -159,10 +162,8 @@ cifras <- c(
   mejormargen     = pct(mejor_margen$margen),
   gananciacien    = millones(mejor_margen$ganancia_por_100_ofertas * 1e6, 0),
   negociosmargen  = pct(mejor_margen$porc_negocios / 100),
-  pagademasmargen = pct(mejor_margen$porc_compras_pagando_de_mas / 100)
+  descuentomax    = pct(mejor_margen$descuento)
 )
-escribir(sprintf("\\newcommand{\\%s}{%s}", names(cifras), cifras), "pres_cifras.tex")
-print(cifras)
 
 # ------------------------------------------------------------------------------
 # 2. Escalera del error con el puntaje privado
@@ -176,17 +177,23 @@ pasos <- tribble(
   "16_xgb_pesos_texto",                "+ texto como\ndatos",
   "21_xgb_mejorado_sesgo",             "+ barrios y\najuste de nivel",
   "27_ensamble_calibrado_reanuncios",  "+ ensamble y\nre-anuncios",
-  "29_ensamble_embeddings",            "+ más\nsemillas"
+  "28_ensamble_v2_nivel",              "+ más modelos\ny semillas",
+  "29_ensamble_embeddings",            "+ embeddings\n(peso casi 0)"
 ) %>%
   left_join(kaggle, by = "envio") %>%
   mutate(orden = row_number(),
          paso = factor(paso, levels = paso),
          mejora = lag(kaggle_privado) - kaggle_privado)
 write_csv(pasos %>% select(envio, paso, kaggle_privado, mejora), file.path(ruta_tablas, "pres_escalera.csv"))
+mejora_paso <- function(e) millones(pasos$mejora[pasos$envio == e], 0)
+cifras <- c(cifras,
+            pasoentorno = mejora_paso("05_lm_completa"),
+            pasoxgb     = mejora_paso("09_xgb_completa"),
+            pasotexto   = mejora_paso("16_xgb_pesos_texto"))
 
 g_escalera <- pasos %>%
   ggplot(aes(paso, kaggle_privado / 1e6)) +
-  geom_col(fill = c(rep("grey70", 2), rep("#2166AC", 6)), width = 0.7) +
+  geom_col(fill = c(rep("grey70", 2), rep("#2166AC", nrow(pasos) - 2)), width = 0.7) +
   geom_text(aes(label = millones(kaggle_privado)), vjust = -0.4, size = 4) +
   geom_text(data = filter(pasos, !is.na(mejora)),
             aes(y = 15, label = paste0("-", millones(mejora))), color = "white", size = 3.6, fontface = "bold") +
@@ -197,7 +204,7 @@ g_escalera <- pasos %>%
        caption = "Gris: regresión lineal. Azul: XGBoost y ensambles de XGBoost.") +
   tema +
   theme(axis.text.x = element_text(size = 11), panel.grid.major.x = element_blank())
-guardar(g_escalera, "pres_escalera", ancho = 11, alto = 5.2)
+guardar(g_escalera, "pres_escalera", ancho = 12, alto = 5.2)
 
 # ------------------------------------------------------------------------------
 # 3. Importancia por grupo de variables (XGBoost 20)
@@ -246,11 +253,19 @@ g_familias <- mejor_familia %>%
             hjust = -0.25, size = 4) +
   scale_color_manual(values = c(`TRUE` = "#2166AC", `FALSE` = "grey45"), guide = "none") +
   scale_x_continuous(limits = c(0, max(mejor_familia$kaggle_privado) / 1e6 * 1.3), breaks = seq(0, 300, 50)) +
-  labs(title = "Seis familias, un ganador claro: el boosting",
-       subtitle = "Mejor MAE privado de Kaggle de cada familia (millones de pesos; entre paréntesis, el envío)",
+  labs(title = "El boosting le gana a las otras cinco familias",
+       subtitle = "Mejor MAE privado de Kaggle de cada familia y del ensamble de XGBoost (millones de pesos; entre paréntesis, el envío)",
        x = "MAE privado (millones)", y = NULL) +
   tema
 guardar(g_familias, "pres_familias", ancho = 9.5, alto = 5)
+privado_familia <- function(f) mejor_familia$kaggle_privado[mejor_familia$familia == f]
+mejor_alternativa <- mejor_familia %>%
+  filter(!str_detect(familia, "XGBoost")) %>%
+  summarise(m = min(kaggle_privado)) %>%
+  pull(m)
+cifras <- c(cifras,
+            ventajaxgb      = millones(mejor_alternativa - privado_familia("XGBoost"), 0),
+            ventajaensamble = millones(privado_familia("XGBoost") - privado_familia("Ensamble de XGBoost"), 0))
 
 # ------------------------------------------------------------------------------
 # 5. Tabla de los envíos 05 a 09: misma base, cinco familias
@@ -262,6 +277,7 @@ misma_base <- resultados %>%
   transmute(familia = fun_familia(modelo), aleatoria = mae_cv_aleatoria, bloques = mae_cv_bloques,
             buffer = mae_cv_bloques_buffer, localidad = mae_cv_localidad, kaggle = kaggle_privado)
 write_csv(misma_base, file.path(ruta_tablas, "pres_misma_base.csv"))
+cifras <- c(cifras, mismabasedif = millones(max(misma_base$kaggle) - min(misma_base$kaggle), 0))
 
 fun_celda <- function(x, columna) {
   texto <- millones(x, 0)
@@ -350,6 +366,7 @@ predicciones_test <- bind_rows(
     mutate(modelo = "XGBoost (09)")
 )
 distintos <- predicciones_test %>% group_by(modelo) %>% summarise(n = n_distinct(price))
+cifras <- c(cifras, cartdistintos = format(distintos$n[distintos$modelo == "CART (07)"], big.mark = "."))
 g_cart <- predicciones_test %>%
   left_join(distintos, by = "modelo") %>%
   mutate(modelo = sprintf("%s: %s precios distintos", modelo, format(n, big.mark = ".", decimal.mark = ","))) %>%
@@ -394,7 +411,8 @@ g_cv_kaggle <- cv_kaggle %>%
   labs(title = "La validación espacial se parece más a Kaggle",
        subtitle = "Cada punto es un envío. Línea punteada: la validación acierta exactamente el error de Kaggle.",
        x = "MAE de validación cruzada (millones)", y = "MAE privado de Kaggle (millones)",
-       caption = "Se excluye la red 17, cuyo error con localidades por fuera es de 348 millones.") +
+       caption = sprintf("Se excluye la red 17, cuyo error con localidades por fuera es de %s millones.",
+                         millones(resultados$mae_cv_localidad[resultados$modelo == "17_nnet_texto"], 0))) +
   tema +
   theme(strip.text = element_text(size = 10, face = "bold"))
 guardar(g_cv_kaggle, "pres_cv_vs_kaggle", ancho = 12, alto = 6.5)
@@ -451,5 +469,66 @@ filas_ventajas <- ventajas %>%
 escribir(c("\\begin{tabular}{lrrccc}", "\\toprule",
            "Familia & Kaggle privado & Pérdida fuera de zona & Interacciones & Interpretable & Rápido \\\\",
            "\\midrule", filas_ventajas, "\\bottomrule", "\\end{tabular}"), "pres_ventajas.tex")
+
+# ------------------------------------------------------------------------------
+# 10. Sesgo del mejor ensamble por decil del precio observado y del predicho
+# Error porcentual = predicción / precio observado - 1, con las predicciones
+# fuera de muestra del envío 29 en las dos validaciones que tiene. Condicionar
+# en el precio observado siempre muestra regresión a la media; para comprar
+# solo se conoce la predicción, así que el panel del precio predicho es el que
+# importa para la decisión.
+# ------------------------------------------------------------------------------
+oof_29_esquemas <- bind_rows(
+  readRDS(here("03_Output", "Predictions", "oof_29_ensamble_embeddings_aleatoria.rds")) %>%
+    mutate(esquema = "Aleatoria (estándar)"),
+  oof_29 %>% mutate(esquema = "Localidades por fuera (espacial)")
+) %>%
+  inner_join(train %>% select(property_id, obj_price), by = "property_id") %>%
+  mutate(pred = exp(pred_log), error_pct = pred / obj_price - 1)
+
+sesgo_deciles <- oof_29_esquemas %>%
+  group_by(esquema) %>%
+  mutate(`Según el precio observado` = ntile(obj_price, 10),
+         `Según el precio predicho`  = ntile(pred, 10)) %>%
+  pivot_longer(starts_with("Según"), names_to = "condiciona", values_to = "decil") %>%
+  group_by(esquema, condiciona, decil) %>%
+  summarise(mediana = median(error_pct),
+            p25 = quantile(error_pct, 0.25), p75 = quantile(error_pct, 0.75),
+            .groups = "drop")
+write_csv(sesgo_deciles, file.path(ruta_tablas, "pres_sesgo_deciles.csv"))
+
+colores_esquema <- c("Aleatoria (estándar)" = "#2166AC", "Localidades por fuera (espacial)" = "#E08214")
+g_sesgo <- sesgo_deciles %>%
+  ggplot(aes(decil, mediana, color = esquema, fill = esquema)) +
+  geom_hline(yintercept = 0, color = "grey40") +
+  geom_ribbon(aes(ymin = p25, ymax = p75), alpha = 0.12, color = NA) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ condiciona) +
+  scale_x_continuous(breaks = 1:10) +
+  scale_y_continuous(labels = label_percent()) +
+  scale_color_manual(values = colores_esquema, name = NULL) +
+  scale_fill_manual(values = colores_esquema, name = NULL) +
+  labs(title = "Comprime los precios extremos, pero según la predicción casi no tiene sesgo",
+       subtitle = "Error porcentual del envío 29 (predicción / precio - 1): mediana y rango intercuartil por decil",
+       x = "Decil (1 = más barato)", y = "Error porcentual (positivo = sobreestima)",
+       caption = "Para comprar solo se conoce la predicción: el panel de la derecha es el que importa para ofertar.") +
+  tema +
+  theme(strip.text = element_text(face = "bold", size = 12))
+guardar(g_sesgo, "pres_sesgo_deciles", ancho = 12, alto = 5.5)
+
+# Sesgo mediano en los deciles extremos del precio observado, con localidades
+# por fuera, para el texto de la diapositiva.
+extremos <- sesgo_deciles %>%
+  filter(esquema == "Localidades por fuera (espacial)", condiciona == "Según el precio observado")
+cifras <- c(cifras,
+            sesgobarato = pct(extremos$mediana[extremos$decil == 1]),
+            sesgocaro   = pct(-extremos$mediana[extremos$decil == 10]))
+
+# ------------------------------------------------------------------------------
+# 11. Cifras para las diapositivas, como macros de LaTeX
+# ------------------------------------------------------------------------------
+escribir(sprintf("\\newcommand{\\%s}{%s}", names(cifras), cifras), "pres_cifras.tex")
+print(cifras)
 
 message("Figuras en ", ruta_figuras, " y tablas en ", ruta_tablas)

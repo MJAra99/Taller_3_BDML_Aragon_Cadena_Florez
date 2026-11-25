@@ -3,6 +3,9 @@
 # Objetivo: Elastic Net del log del precio con todos los predictores de la
 #           base completa, estandarizados. Se afinan la mezcla entre Ridge y
 #           Lasso (alpha) y la penalización (lambda).
+#           Usa la base completa con la que se subió el envío: deja por
+#           fuera las variables que se agregaron después (fun_vars_excluidas
+#           en 00_utils.R, versión "completa").
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 # Salidas:  03_Output/Submissions/06_enet_completa.csv
 #           03_Output/Models/06_enet_completa.rds
@@ -16,6 +19,7 @@ grid <- expand.grid(alpha  = c(0, 0.25, 0.5, 0.75, 1),
                     lambda = 10^seq(-5, -1, length.out = 12))
 
 resultado <- fun_correr_caret(envio = "06_enet_completa",
+                              version = "completa",
                               familia = "Elastic Net",
                               metodo = "glmnet",
                               grid = grid,

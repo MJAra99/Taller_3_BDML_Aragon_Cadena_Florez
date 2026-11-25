@@ -12,5 +12,7 @@ datos",159473768.04,12628583.310000002
 ajuste de nivel",154806123.48,4667644.560000002
 27_ensamble_calibrado_reanuncios,"+ ensamble y
 re-anuncios",152518447.89,2287675.5900000036
-29_ensamble_embeddings,"+ más
-semillas",151459023.72,1059424.169999987
+28_ensamble_v2_nivel,"+ más modelos
+y semillas",151988330.63,530117.2599999905
+29_ensamble_embeddings,"+ embeddings
+(peso casi 0)",151459023.72,529306.9099999964

@@ -32,6 +32,9 @@
 #              a predecir test.
 #           5. Se generan dos envíos: el mejor sin pesos (control) y el mejor
 #              con pesos, para comparar en Kaggle si la ponderación ayuda.
+#           Usa la base completa con la que se subió el envío: deja por
+#           fuera las variables que se agregaron después (fun_vars_excluidas
+#           en 00_utils.R, versión "completa").
 # Entradas: 02_Data/Processed/db_{train,test}.rds
 # Salidas:  02_Data/Processed/pesos_adversarial.rds (property_id, p, peso)
 #           03_Output/Submissions/10_xgb_na_nativo.csv, 11_xgb_pesos.csv
@@ -106,7 +109,7 @@ fun_auc <- function(y, p) {
 # Cada dummy bin_<x>_na de 05_merge.R marca las filas donde num_<x> fue
 # imputada con la mediana; en esas filas num_<x> vuelve a NA.
 # ------------------------------------------------------------------------------
-datos <- fun_datos_modelo()
+datos <- fun_datos_modelo("completa")
 folds <- fun_todos_folds(datos$train)
 
 fun_restaurar_na <- function(df) {

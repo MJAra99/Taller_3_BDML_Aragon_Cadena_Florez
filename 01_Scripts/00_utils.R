@@ -317,12 +317,48 @@ no_predictores <- c("property_id", "id_grupo_anuncio", "obj_price", "obj_log_pri
                     "cat_upz_codigo", "cat_sector", "cat_sector_codigo",
                     "cat_cuadrante")
 
+# Variables que se agregaron a la base después de los envíos 05 a 11 (base
+# completa): estrato escrito en el anuncio, dummies de lujo y de barrios de
+# alto precio, valor de referencia y avalúo de la manzana más cercana y en
+# radios de 100 y 500 m, estrato de la manzana más cercana y rezago espacial
+# del precio. Los envíos 12 en adelante ya las tienen.
+vars_base_final <- c("num_estrato_texto", "bin_estrato_texto_na",
+                     "bin_lujo", "bin_vista_ciudad", "bin_chico", "bin_rosales",
+                     "bin_barrio_alto",
+                     "num_vref_m2_mz", "num_vref_m2_100m", "num_vref_m2_500m",
+                     "num_avaluo_ph_m2_mz", "num_avaluo_ph_m2_100m",
+                     "num_avaluo_ph_m2_500m", "num_estrato_mz",
+                     "num_rez_precio_m2_k10", "num_rez_precio_m2_k30",
+                     "num_rez_log_precio_k10", "num_rez_dist_k10")
+
+# Prefijo de las variables de texto como datos (01_Data/06_texto_como_datos.R),
+# que se agregaron después de los envíos 12 a 14. Los envíos 15 en adelante ya
+# las tienen.
+prefijo_texto_como_datos <- "^num_txt_"
+
+# Variables que hay que dejar por fuera para reproducir los envíos de cada
+# versión de la base: "completa" (envíos 05 a 11), "final" (envíos 12 a 14) o
+# "texto" (envíos 15 en adelante, la base actual).
+fun_vars_excluidas <- function(nombres, version = c("texto", "final", "completa")) {
+  version <- match.arg(version)
+  texto <- str_subset(nombres, prefijo_texto_como_datos)
+  switch(version,
+         texto    = character(0),
+         final    = texto,
+         completa = c(texto, intersect(vars_base_final, nombres)))
+}
+
 # Carga las bases finales y convierte las variables categóricas en factores
-# con los mismos niveles en train y test.
-fun_datos_modelo <- function() {
+# con los mismos niveles en train y test. `version` indica qué versión de la
+# base usó el envío (ver fun_vars_excluidas): las variables que esa versión
+# no tenía se quitan de train y de test.
+fun_datos_modelo <- function(version = "texto") {
   ruta <- here("02_Data", "Processed")
   train <- readRDS(file.path(ruta, "db_train.rds"))
   test  <- readRDS(file.path(ruta, "db_test.rds"))
+  excluidas <- fun_vars_excluidas(names(train), version)
+  train <- train %>% dplyr::select(-all_of(excluidas))
+  test  <- test %>% dplyr::select(-any_of(excluidas))
   predictores <- setdiff(names(train), no_predictores)
   categoricas <- predictores[map_lgl(train[predictores], ~ is.character(.x) || is.factor(.x))]
   for (v in categoricas) {
@@ -405,8 +441,9 @@ fun_descripcion_kaggle <- function(familia, hiperparam_texto, mae_esquemas) {
 # 3. ajusta el modelo final con todo train y predice test;
 # 4. guarda el envío, el resumen del modelo en 03_Output/Models/<envio>.rds y
 #    su fila en resultados_modelos.csv, e imprime la descripción para Kaggle.
-fun_correr_caret <- function(envio, familia, metodo, grid = NULL, ...) {
-  datos <- fun_datos_modelo()
+# `version` es la versión de la base que usó el envío (ver fun_datos_modelo).
+fun_correr_caret <- function(envio, familia, metodo, grid = NULL, version = "texto", ...) {
+  datos <- fun_datos_modelo(version)
   folds <- fun_todos_folds(datos$train)
 
   message("Afinando con el esquema: ", etiquetas_cv[[esquema_seleccion]])

@@ -27,10 +27,10 @@
 \input{comunes/c07_validacion.tex}
 
 % --- Comparación de familias --------------------------------------------------
-\begin{frame}{Seis familias, un ganador claro: el boosting}
+\begin{frame}{Seis familias de algoritmos, un ganador: el boosting}
   \centering
   \includegraphics[width=0.85\textwidth]{pres_familias.pdf}
-  \lectura{El mejor XGBoost individual ya le gana por más de 35 millones a la mejor alternativa; el ensamble agrega 3 millones más.}
+  \lectura{El mejor XGBoost individual le gana por \ventajaxgb{} millones a la mejor alternativa; el ensamble de XGBoost baja el error \ventajaensamble{} millones más.}
   \note{Se muestra el mejor envío de cada familia en el puntaje privado. Las redes neuronales quedaron cerca del Random Forest, pero muy lejos del boosting. Entre paréntesis está el número del envío.}
 \end{frame}
 
@@ -40,7 +40,7 @@
   \centering
   \figuraancha{pres_modelos_simples.pdf}
   \lectura{La regresión lineal no captura interacciones (el valor de un m$^2$ depende de la zona) y comprime más los extremos; un solo árbol predice pocos precios distintos.}
-  \note{Izquierda: error medio por decil de precio con localidades por fuera. Los dos modelos subestiman lo caro, pero la regresión lineal mucho más. Derecha: CART asigna el mismo precio a todos los anuncios de una hoja, así que en test predice solo unos 59 precios distintos. El Elastic Net no ayuda frente a la regresión lineal porque hay muchas más observaciones que variables.}
+  \note{Izquierda: error medio por decil de precio con localidades por fuera. Los dos modelos subestiman lo caro, pero la regresión lineal mucho más. Derecha: CART asigna el mismo precio a todos los anuncios de una hoja, así que en test predice solo \cartdistintos{} precios distintos. El Elastic Net no ayuda frente a la regresión lineal porque hay muchas más observaciones que variables.}
 \end{frame}
 
 \begin{frame}{Con los mismos datos, el algoritmo lo cambia todo}
@@ -49,7 +49,7 @@
 
   \vspace{1em}
   \lectura{MAE en millones de pesos. Envíos 05 a 09: misma base y cinco familias. En negrilla, el mejor de cada columna.}
-  \note{Esta tabla aísla el efecto del algoritmo: todas las familias usan exactamente las mismas variables. La distancia entre el peor (CART) y el mejor (XGBoost) en Kaggle es de casi 60 millones. Fíjense en la columna aleatoria: ahí el mejor es el Random Forest.}
+  \note{Esta tabla aísla el efecto del algoritmo: todas las familias usan exactamente las mismas variables. La distancia entre el peor (CART) y el mejor (XGBoost) en Kaggle es de \mismabasedif{} millones. Fíjense en la columna aleatoria: ahí el mejor es el Random Forest.}
 \end{frame}
 
 \begin{frame}{Qué familia gana según cómo se valida}
