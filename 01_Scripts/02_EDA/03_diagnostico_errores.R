@@ -203,7 +203,7 @@ oof <- map_dfr(c(aleatoria = "aleatoria", localidad = "localidad"), function(esq
   saveRDS(r, file.path(ruta_pred, paste0("oof_16_", esq, ".rds")))
   r
 }) %>%
-  mutate(esquema   = recode(esquema, aleatoria = "Aleatoria", localidad = "Localidades"),
+  mutate(esquema   = dplyr::recode(esquema, aleatoria = "Aleatoria", localidad = "Localidades"),
          error     = pred - obs,                 # positivo = sobreestima
          error_pct = pred / obs - 1,
          error_abs = abs(error),
@@ -257,9 +257,9 @@ write_csv(tabla_sigue_kaggle, file.path(ruta_tab, "diag_cv_vs_kaggle.csv"))
 print(tabla_sigue_kaggle %>% mutate(across(c(dif_cv, dif_kaggle), ~ round(.x / 1e6, 1))), n = Inf)
 
 p_sigue <- tabla_sigue_kaggle %>%
-  mutate(metrica = recode(metrica, mae = "MAE", mae_pond = "MAE ponderado por parecido con test",
+  mutate(metrica = dplyr::recode(metrica, mae = "MAE", mae_pond = "MAE ponderado por parecido con test",
                           mae_chap = "MAE en Chapinero (train)"),
-         esquema = recode(esquema, aleatoria = "Aleatoria", bloques = "Bloques 2 km",
+         esquema = dplyr::recode(esquema, aleatoria = "Aleatoria", bloques = "Bloques 2 km",
                           bloques_buffer = "Bloques + buffer", localidad = "Localidades"),
          esquema = factor(esquema, levels = rev(c("Aleatoria", "Bloques 2 km",
                                                   "Bloques + buffer", "Localidades")))) %>%
@@ -430,7 +430,7 @@ write_csv(parecido, file.path(ruta_tab, "diag_parecido_test.csv"))
 
 p_parecido <- parecido %>%
   pivot_longer(c(mae_pct, sesgo_pct), names_to = "medida", values_to = "valor") %>%
-  mutate(medida = recode(medida, mae_pct = "Error absoluto mediano",
+  mutate(medida = dplyr::recode(medida, mae_pct = "Error absoluto mediano",
                          sesgo_pct = "Sesgo mediano (positivo = sobreestima)")) %>%
   ggplot(aes(decil_parecido, valor, color = esquema)) +
   geom_hline(yintercept = 0, color = col_texto, linewidth = 0.3) +

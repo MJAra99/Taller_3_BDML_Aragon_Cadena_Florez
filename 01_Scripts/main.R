@@ -76,6 +76,15 @@ correr_python_script <- function(script) {
     round(as.numeric(difftime(Sys.time(), inicio, units = "mins")), 1))
 }
 
+# Carpetas de datos procesados y de resultados. Se crean si no existen, para
+# que el proyecto corra desde cero aunque se borren 02_Data/Processed y
+# 03_Output: todo lo que hay en ellas lo generan los scripts.
+for (carpeta in c("02_Data/Processed", "02_Data/Raw/MapasBogota/capas",
+                  "03_Output/Figures", "03_Output/Tables", "03_Output/Models",
+                  "03_Output/Predictions", "03_Output/Submissions")) {
+  dir.create(file.path(raiz, carpeta), recursive = TRUE, showWarnings = FALSE)
+}
+
 capas_necesarias <- file.path(raiz, "02_Data", "Raw", "MapasBogota", "capas",
                               c("01_valor_referencia.geojson", "44_localidades.geojson",
                                 "45_upz.geojson"))

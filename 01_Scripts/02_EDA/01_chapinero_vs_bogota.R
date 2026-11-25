@@ -256,7 +256,7 @@ p_balance <- balance %>%
   mutate(etiqueta = fct_reorder(etiqueta, dif_std_resto)) %>%
   pivot_longer(c(dif_std_resto, dif_std_chap),
                names_to = "comparacion", values_to = "dif") %>%
-  mutate(comparacion = recode(comparacion,
+  mutate(comparacion = dplyr::recode(comparacion,
                               dif_std_resto = "Test vs. resto de Bogotá (train)",
                               dif_std_chap  = "Test vs. Chapinero (train)")) %>%
   ggplot(aes(dif, etiqueta, color = comparacion, shape = comparacion)) +
