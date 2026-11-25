@@ -1,0 +1,7 @@
+familia,interacciones,interpretable,rapidez,kaggle_privado,perdida
+Regresión lineal,$\bullet\circ\circ$,$\bullet\bullet\bullet$,$\bullet\bullet\bullet$,211866938.33,0.10420581420253461
+Elastic Net,$\bullet\circ\circ$,$\bullet\bullet\bullet$,$\bullet\bullet\bullet$,213639957.88,0.07892655149995553
+CART,$\bullet\bullet\circ$,$\bullet\bullet\bullet$,$\bullet\bullet\bullet$,228579561.1,0.18306655103181568
+Random Forest,$\bullet\bullet\bullet$,$\bullet\circ\circ$,$\bullet\circ\circ$,199145378.28,0.4214713025127925
+XGBoost,$\bullet\bullet\bullet$,$\bullet\bullet\circ$,$\bullet\bullet\circ$,154806123.48,0.22787346620654736
+Red neuronal,$\bullet\bullet\circ$,$\bullet\circ\circ$,$\bullet\circ\circ$,193617731.18,1.9063324890365996

@@ -1,0 +1,21 @@
+modelo,decil,error_medio
+Ensamble de XGBoost (29),1,0.2283154671328875
+Ensamble de XGBoost (29),2,0.14940068764609077
+Ensamble de XGBoost (29),3,0.10424338542149503
+Ensamble de XGBoost (29),4,0.08494191662604973
+Ensamble de XGBoost (29),5,0.059977382166265115
+Ensamble de XGBoost (29),6,0.029137002301357316
+Ensamble de XGBoost (29),7,0.005430184843601774
+Ensamble de XGBoost (29),8,-0.025490969582443252
+Ensamble de XGBoost (29),9,-0.07840940796582511
+Ensamble de XGBoost (29),10,-0.19650462353054587
+Regresión lineal,1,0.2536943366507506
+Regresión lineal,2,0.17799587490970709
+Regresión lineal,3,0.1281280095623022
+Regresión lineal,4,0.08560966642365812
+Regresión lineal,5,0.04020778432788804
+Regresión lineal,6,-0.015897774302875468
+Regresión lineal,7,-0.0501533235161839
+Regresión lineal,8,-0.0993724000043468
+Regresión lineal,9,-0.14086918715176822
+Regresión lineal,10,-0.23572303543674766

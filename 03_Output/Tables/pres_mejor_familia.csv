@@ -1,0 +1,8 @@
+envio,subido_por,kaggle_publico,kaggle_privado,familia
+03_cart_base,Jonathan Cadena Silva,228115162.81,228579561.1,CART
+06_enet_completa,Jonathan Cadena Silva,219494164.03,213639957.88,Elastic Net
+05_lm_completa,Jonathan Cadena Silva,216428479.61,211866938.33,Regresión lineal
+08_rf_completa,Jonathan Cadena Silva,201102011.45,199145378.28,Random Forest
+17_nnet_texto,Jonathan Cadena Silva,194563311.88,193617731.18,Red neuronal
+21_xgb_mejorado_sesgo,Mauricio Aragon,153374121.56,154806123.48,XGBoost
+29_ensamble_embeddings,Mauricio Aragon,149373386.02,151459023.72,Ensamble de XGBoost

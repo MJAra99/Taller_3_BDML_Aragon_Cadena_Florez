@@ -1,0 +1,12 @@
+\begin{tabular}{lrrrr|r}
+\toprule
+ & \multicolumn{4}{c|}{Validación cruzada} & Kaggle \\
+Familia & Aleatoria & Bloques 2 km & Bloques + buffer & Localidades & privado \\
+\midrule
+Regresión lineal & 146 & 151 & 153 & 161 & 212 \\
+Elastic Net & 146 & 150 & 151 & 158 & 214 \\
+CART & 141 & 150 & 153 & 167 & 233 \\
+Random Forest & \textbf{103} & 132 & 135 & 146 & 199 \\
+XGBoost & 110 & \textbf{125} & \textbf{128} & \textbf{134} & \textbf{175} \\
+\bottomrule
+\end{tabular}
